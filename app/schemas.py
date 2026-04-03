@@ -48,8 +48,9 @@ class CategoryOptionsResponse(BaseModel):
 
 
 class DashboardSummaryResponse(BaseModel):
+    income_total: float
+    expense_total: float
     total_balance: float
-    monthly_spending: float
 
 
 class TransactionPageResponse(BaseModel):

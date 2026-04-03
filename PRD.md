@@ -78,8 +78,7 @@ Single-user local operator who wants quick and clear financial visibility withou
 1. Higher when income exceeds expenses.
 2. Lower when expenses exceed income.
 3. Deterministic behavior for empty/low-data states.
-2. Daily spending limit = monthly spending / 30.
-3. Smart suggestions (LLM-powered):
+2. Smart suggestions (LLM-powered):
 1. Suggestions are generated from recent transaction history.
 2. Backend calls an OpenAI-compatible chat completion API.
 3. Default provider path uses LLaMA via Groq and allows provider/model override via environment variables.
@@ -177,12 +176,13 @@ Single-user local operator who wants quick and clear financial visibility withou
 2. Transactions persist and are returned by API.
 3. Dashboard metrics match manual calculations.
 4. Pie and line charts render correctly for empty and non-empty states.
-5. Health score, daily limit, and suggestions update with new data.
-6. AI suggestions endpoint returns provider, model, and concise insight.
-7. Dark mode persists after reload.
-8. App runs end-to-end with documented setup commands.
-9. LLM responses include at least one concrete action when giving advice.
-10. Chatbot answers include direct response plus short rationale from transaction context.
+5. Health score and suggestions update with new data.
+6. Dashboard summary API returns numeric values (total_balance, monthly_spending).
+7. AI suggestions endpoint returns provider, model, and concise insight.
+9. Dark mode persists after reload.
+10. App runs end-to-end with documented setup commands.
+11. LLM responses include at least one concrete action when giving advice.
+12. Chatbot answers include direct response plus short rationale from transaction context.
 
 ## 16. Risks and Mitigations
 1. Risk: inconsistent category casing splits chart slices.

@@ -10,6 +10,9 @@ const tableSummary = document.getElementById('table-summary');
 const pageIndicator = document.getElementById('page-indicator');
 const prevPageButton = document.getElementById('prev-page');
 const nextPageButton = document.getElementById('next-page');
+const incomeTotalMetric = document.getElementById('metric-income-total');
+const expenseTotalMetric = document.getElementById('metric-expense-total');
+const totalBalanceMetric = document.getElementById('metric-total-balance');
 
 const state = {
   page: 1,
@@ -70,6 +73,28 @@ function formatDate(value) {
     day: 'numeric',
     year: 'numeric',
   }).format(date);
+}
+
+async function loadDashboardSummary() {
+  if (!incomeTotalMetric || !expenseTotalMetric || !totalBalanceMetric) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/dashboard-summary');
+    if (!response.ok) {
+      throw new Error('Failed to load summary.');
+    }
+
+    const summary = await response.json();
+    incomeTotalMetric.textContent = formatCurrency(Number(summary.income_total ?? 0));
+    expenseTotalMetric.textContent = formatCurrency(Number(summary.expense_total ?? 0));
+    totalBalanceMetric.textContent = formatCurrency(Number(summary.total_balance ?? 0));
+  } catch (err) {
+    incomeTotalMetric.textContent = '--';
+    expenseTotalMetric.textContent = '--';
+    totalBalanceMetric.textContent = '--';
+  }
 }
 
 function resolveCategories(transactionType) {
@@ -308,6 +333,7 @@ form?.addEventListener('submit', async (event) => {
     form.reset();
     dateInput.value = new Date().toISOString().split('T')[0];
     loadCategories(typeSelect?.value || 'expense');
+    loadDashboardSummary();
     loadTransactions();
   } catch (err) {
     showMessage('Network error. Please try again.', true);
@@ -366,6 +392,7 @@ tableBody?.addEventListener('click', async (event) => {
     }
 
     showMessage('Transaction deleted.');
+    await loadDashboardSummary();
     await loadTransactions();
   } catch (err) {
     showMessage(err.message || 'Failed to delete transaction.', true);
@@ -376,4 +403,5 @@ tableBody?.addEventListener('click', async (event) => {
 
 setCategoryOptions(filterCategorySelect, ALL_CATEGORY_OPTIONS, 'all', true);
 loadCategories(typeSelect?.value || 'expense');
+loadDashboardSummary();
 loadTransactions();

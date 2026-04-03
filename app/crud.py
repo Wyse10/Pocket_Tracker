@@ -123,6 +123,7 @@ def get_dashboard_summary(db: Session) -> dict[str, float]:
     )
 
     return {
+        "income_total": float(income_total),
+        "expense_total": float(expense_total),
         "total_balance": float(income_total) - float(expense_total),
-        "monthly_spending": float(monthly_spending),
     }
