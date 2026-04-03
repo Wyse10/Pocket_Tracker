@@ -12,17 +12,32 @@ from .database import Base, engine, get_db
 
 app = FastAPI(title="SmartSpend AI")
 
-CATEGORY_OPTIONS: list[str] = [
-    "Food & Drink",
-    "Transport",
-    "Entertainment",
-    "Shopping",
-    "Health",
-    "Salary",
-    "Utility",
-    "Housing",
-    "Others",
-]
+CATEGORY_OPTIONS_BY_TYPE: dict[str, list[str]] = {
+    "income": [
+        "Salary",
+        "Freelance",
+        "Business",
+        "Investment Returns",
+        "Gift Recieved",
+        "Others",
+    ],
+    "expense": [
+        "Food & Drink",
+        "Transport",
+        "Enterianment",
+        "Shopping",
+        "Healt",
+        "Utility",
+        "Housing",
+        "Others",
+    ],
+}
+
+ALL_CATEGORY_OPTIONS: list[str] = list(
+    dict.fromkeys(
+        CATEGORY_OPTIONS_BY_TYPE["income"] + CATEGORY_OPTIONS_BY_TYPE["expense"]
+    )
+)
 
 
 def ensure_schema_updates() -> None:
@@ -70,7 +85,10 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
 
 @app.post("/categories", response_model=schemas.CategoryOptionsResponse)
 def get_categories(payload: schemas.CategoryOptionsRequest):
-    return {"categories": CATEGORY_OPTIONS}
+    if payload.transaction_type:
+        return {"categories": CATEGORY_OPTIONS_BY_TYPE[payload.transaction_type]}
+
+    return {"categories": ALL_CATEGORY_OPTIONS}
 
 
 @app.get("/transactions", response_model=schemas.TransactionPageResponse)

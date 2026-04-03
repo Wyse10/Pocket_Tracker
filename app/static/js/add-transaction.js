@@ -20,17 +20,30 @@ const state = {
   total: 0,
 };
 
-const CATEGORY_OPTIONS = [
-  'Food & Drink',
-  'Transport',
-  'Entertainment',
-  'Shopping',
-  'Health',
-  'Salary',
-  'Utility',
-  'Housing',
-  'Others',
-];
+const CATEGORY_OPTIONS_BY_TYPE = {
+  income: [
+    'Salary',
+    'Freelance',
+    'Business',
+    'Investment Returns',
+    'Gift Recieved',
+    'Others',
+  ],
+  expense: [
+    'Food & Drink',
+    'Transport',
+    'Enterianment',
+    'Shopping',
+    'Healt',
+    'Utility',
+    'Housing',
+    'Others',
+  ],
+};
+
+const ALL_CATEGORY_OPTIONS = Array.from(
+  new Set([...CATEGORY_OPTIONS_BY_TYPE.income, ...CATEGORY_OPTIONS_BY_TYPE.expense])
+);
 
 if (dateInput) {
   dateInput.value = new Date().toISOString().split('T')[0];
@@ -59,7 +72,15 @@ function formatDate(value) {
   }).format(date);
 }
 
-function setCategoryOptions(selectElement, selectedValue, includeAllOption = false) {
+function resolveCategories(transactionType) {
+  if (transactionType === 'income' || transactionType === 'expense') {
+    return CATEGORY_OPTIONS_BY_TYPE[transactionType];
+  }
+
+  return ALL_CATEGORY_OPTIONS;
+}
+
+function setCategoryOptions(selectElement, categories, selectedValue, includeAllOption = false) {
   if (!selectElement) return;
 
   const options = [];
@@ -67,16 +88,19 @@ function setCategoryOptions(selectElement, selectedValue, includeAllOption = fal
     options.push('<option value="all">All Categories</option>');
   }
 
-  options.push(...CATEGORY_OPTIONS.map((category) => `<option value="${category}">${category}</option>`));
+  options.push(...categories.map((category) => `<option value="${category}">${category}</option>`));
   selectElement.innerHTML = options.join('');
 
-  if (selectedValue) {
+  if (selectedValue && (selectedValue === 'all' || categories.includes(selectedValue))) {
     selectElement.value = selectedValue;
   }
 }
 
 async function loadCategories(transactionType) {
   if (!categorySelect) return;
+
+  const fallbackCategories = resolveCategories(transactionType);
+  const previouslySelected = categorySelect.value;
 
   try {
     const response = await fetch('/categories', {
@@ -90,17 +114,20 @@ async function loadCategories(transactionType) {
     }
 
     const data = await response.json();
-    const categories = Array.isArray(data.categories) ? data.categories : [];
-    if (!categories.length) {
-      categorySelect.innerHTML = '<option value="Food & Drink">Food & Drink</option>';
-      return;
+    const categories = Array.isArray(data.categories) && data.categories.length
+      ? data.categories
+      : fallbackCategories;
+
+    setCategoryOptions(categorySelect, categories, previouslySelected);
+
+    if (!categories.includes(categorySelect.value)) {
+      categorySelect.value = categories[0] || '';
     }
-
-    categorySelect.innerHTML = categories.map((category) => `<option value="${category}">${category}</option>`).join('');
-
-    categorySelect.value = categorySelect.value || 'Food & Drink';
   } catch (err) {
-    categorySelect.innerHTML = '<option value="Food & Drink">Food & Drink</option>';
+    setCategoryOptions(categorySelect, fallbackCategories, previouslySelected);
+    if (!fallbackCategories.includes(categorySelect.value)) {
+      categorySelect.value = fallbackCategories[0] || '';
+    }
   }
 }
 
@@ -292,7 +319,10 @@ typeSelect?.addEventListener('change', () => {
 });
 
 filterTypeSelect?.addEventListener('change', () => {
-  syncFilterState({ type: filterTypeSelect.value });
+  const selectedType = filterTypeSelect.value;
+  const categories = resolveCategories(selectedType === 'all' ? null : selectedType);
+  setCategoryOptions(filterCategorySelect, categories, 'all', true);
+  syncFilterState({ type: selectedType, category: 'all' });
 });
 
 filterCategorySelect?.addEventListener('change', () => {
@@ -344,6 +374,6 @@ tableBody?.addEventListener('click', async (event) => {
   }
 });
 
-setCategoryOptions(filterCategorySelect, 'all', true);
+setCategoryOptions(filterCategorySelect, ALL_CATEGORY_OPTIONS, 'all', true);
 loadCategories(typeSelect?.value || 'expense');
 loadTransactions();
