@@ -69,6 +69,11 @@ def get_transactions(db: Session = Depends(get_db)):
     return crud.list_transactions(db)
 
 
+@app.get("/dashboard-summary", response_model=schemas.DashboardSummaryResponse)
+def get_dashboard_summary(db: Session = Depends(get_db)):
+    return crud.get_dashboard_summary(db)
+
+
 @app.get("/ai-suggestions", response_model=schemas.AIInsightResponse)
 def get_ai_suggestions(db: Session = Depends(get_db)):
     transactions = crud.list_transactions(db)

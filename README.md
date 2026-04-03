@@ -84,13 +84,12 @@ Current implemented features:
 
    Windows (PowerShell):
    ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+  python -m venv .venv
+  .\.venv\Scripts\Activate.ps1
    ```
 
 3. Install dependencies
    ```bash
-   pip install -r requirements.txt
    ```
 
 4. Configure AI provider (recommended for suggestions endpoint)

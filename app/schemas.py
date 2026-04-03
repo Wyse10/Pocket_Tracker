@@ -55,3 +55,8 @@ class CategoryOptionsRequest(BaseModel):
 
 class CategoryOptionsResponse(BaseModel):
     categories: list[str]
+
+
+class DashboardSummaryResponse(BaseModel):
+    total_balance: float
+    monthly_spending: float
