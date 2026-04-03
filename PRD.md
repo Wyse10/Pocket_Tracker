@@ -90,10 +90,11 @@ Single-user local operator who wants quick and clear financial visibility withou
 
 ### FR-6 LLM Assistant Capabilities
 1. Smart financial insights:
-1. LLM analyzes transaction trends and category concentration.
-2. LLM returns concrete, measurable suggestions.
-3. Example output style: "You spend 45% on food. Consider reducing this by 15% next month."
-4. Example output style: "Your expenses increased 20% this month compared to last month."
+1. Backend aggregates transaction data into meaningful summaries (totals, percentages, trends).
+2. LLM analyzes pre-computed aggregations (not raw transaction rows).
+3. LLM returns concrete, measurable suggestions based on aggregated data.
+4. Example output style: "You spend 45% on food. Consider reducing this by 15% next month."
+5. Example output style: "Your expenses increased 20% this month compared to last month."
 2. Conversational chatbot:
 1. User can ask natural-language questions about spending patterns.
 2. Example questions: "How much did I spend on transport last week?" and "Am I saving enough?"
@@ -120,13 +121,19 @@ Single-user local operator who wants quick and clear financial visibility withou
 4. spending_over_time
 
 ### GET /ai-suggestions
-1. Builds context from saved transactions.
-2. Calls configured LLM provider.
-3. Returns JSON containing:
+1. Builds context from aggregated data (not raw transactions).
+2. Aggregates meaningful metrics using SQLAlchemy queries:
+1. Total income, total expense, net balance
+2. Expense breakdown by category with percentages
+3. Monthly spending trend (current vs prior month if available)
+4. Top 3 spending categories
+5. Average transaction size and frequency metrics
+3. Calls configured LLM provider with aggregated payload.
+4. Returns JSON containing:
 1. provider
 2. model
 3. insight
-4. Returns clear error when API key/provider configuration is missing.
+5. Returns clear error when API key/provider configuration is missing.
 
 ### POST /ai-chat (Planned)
 1. Accepts natural-language user finance question.
@@ -148,8 +155,14 @@ Single-user local operator who wants quick and clear financial visibility withou
 2. database.py: DB engine/session setup and dependency injection.
 3. models.py: SQLAlchemy models.
 4. schemas.py: Pydantic request/response schemas.
-5. crud.py: DB operations and summary aggregations.
-6. ai_insights.py: LLM request builder and suggestion generation.
+5. crud.py: DB operations and aggregations using optimized SQLAlchemy queries.
+6. ai_insights.py: LLM request builder that receives pre-aggregated data and generates suggestions.
+
+### Aggregation Optimization
+1. Use SQLAlchemy func.sum(), func.count(), and group_by() for all aggregations.
+2. Compute category totals and percentages in single query (avoid N+1 queries).
+3. Cache monthly trend calculations using SQL window functions or explicit multi-month query.
+4. Minimize data passed to LLM: send aggregated numbers only, not raw transaction rows.
 
 ### Frontend files
 1. dashboard.html: metrics, charts, insights UI.
@@ -170,6 +183,8 @@ Single-user local operator who wants quick and clear financial visibility withou
 2. Stable behavior for empty and normal datasets.
 3. Minimal setup friction for local run.
 4. Consistent JSON response keys for frontend integration.
+5. AI aggregation queries must execute in single or minimal round trips (no N+1 queries).
+6. LLM receives only aggregated summary data, never raw transaction lists.
 
 ## 15. Acceptance Criteria
 1. User can add both income and expense transactions from UI.
@@ -177,8 +192,10 @@ Single-user local operator who wants quick and clear financial visibility withou
 3. Dashboard metrics match manual calculations.
 4. Pie and line charts render correctly for empty and non-empty states.
 5. Health score and suggestions update with new data.
-6. Dashboard summary API returns numeric values (total_balance, monthly_spending).
-7. AI suggestions endpoint returns provider, model, and concise insight.
+6. Dashboard summary API returns numeric values (income_total, expense_total, balance).
+7. AI suggestions endpoint returns aggregated metrics (category breakdown, percentages, trends) and concise insight.
+8. AI endpoint payload contains no raw transaction rows, only aggregated summary data.
+9. All aggregation queries use SQLAlchemy and execute efficiently (single query per aggregation type).
 9. Dark mode persists after reload.
 10. App runs end-to-end with documented setup commands.
 11. LLM responses include at least one concrete action when giving advice.

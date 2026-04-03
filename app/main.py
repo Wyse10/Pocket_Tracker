@@ -115,31 +115,11 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
 
 @app.get("/ai-suggestions", response_model=schemas.AIInsightResponse)
 def get_ai_suggestions(db: Session = Depends(get_db)):
-    transactions = crud.list_transactions(db)
-    tx_payload = [
-        {
-            "amount": tx.amount,
-            "type": tx.type,
-            "category": tx.category,
-            "description": tx.description,
-            "date": tx.date,
-        }
-        for tx in transactions
-    ]
-    return generate_ai_insight(tx_payload)
+    aggregated_data = crud.get_ai_aggregation_data(db)
+    return generate_ai_insight(aggregated_data)
 
 
 @app.post("/ai-suggestions", response_model=schemas.AIInsightResponse)
 def create_ai_suggestion(payload: schemas.AIInsightRequest, db: Session = Depends(get_db)):
-    transactions = crud.list_transactions(db)
-    tx_payload = [
-        {
-            "amount": tx.amount,
-            "type": tx.type,
-            "category": tx.category,
-            "description": tx.description,
-            "date": tx.date,
-        }
-        for tx in transactions
-    ]
-    return generate_ai_insight(tx_payload, focus=payload.focus)
+    aggregated_data = crud.get_ai_aggregation_data(db)
+    return generate_ai_insight(aggregated_data, focus=payload.focus)

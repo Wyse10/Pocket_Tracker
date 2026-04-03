@@ -1,22 +1,40 @@
 import os
-from datetime import date
 
 import httpx
 from fastapi import HTTPException
 
 
-def _serialize_transactions(transactions: list[dict]) -> str:
-    if not transactions:
-        return "No transactions available yet."
-
-    lines = []
-    for tx in transactions[-50:]:
-        tx_date = tx.get("date")
-        if isinstance(tx_date, date):
-            tx_date = tx_date.isoformat()
-        lines.append(
-            f"- {tx_date} | {tx.get('type')} | {tx.get('category')} | {tx.get('amount')}"
-        )
+def _serialize_aggregation(agg_data: dict) -> str:
+    """
+    Convert aggregated financial data into a readable summary for LLM.
+    Includes totals, category breakdown, percentages, and trends.
+    """
+    lines = [
+        f"Income (Overall): ${agg_data.get('income_total', 0):.2f}",
+        f"Expenses (Overall): ${agg_data.get('expense_total', 0):.2f}",
+        f"Net Balance: ${agg_data.get('net_balance', 0):.2f}",
+        "",
+        f"Current Month Spending: ${agg_data.get('current_month_spending', 0):.2f}",
+        f"Previous Month Spending: ${agg_data.get('previous_month_spending', 0):.2f}",
+        f"Month-over-Month Change: {agg_data.get('month_over_month_change_pct', 0):.1f}%",
+        "",
+    ]
+    
+    # Category breakdown
+    category_breakdown = agg_data.get("category_breakdown", {})
+    if category_breakdown:
+        lines.append("Expense Breakdown by Category:")
+        for category, data in list(category_breakdown.items())[:5]:
+            lines.append(f"  - {category}: ${data.get('total', 0):.2f} ({data.get('percentage', 0):.1f}%)")
+        lines.append("")
+    
+    # Transaction metrics
+    lines.extend([
+        f"Total Transactions: {agg_data.get('total_transactions', 0)}",
+        f"Average Expense: ${agg_data.get('average_expense', 0):.2f}",
+        f"Average Income: ${agg_data.get('average_income', 0):.2f}",
+    ])
+    
     return "\n".join(lines)
 
 
@@ -62,7 +80,7 @@ def _call_chat_completion(
     )
 
 
-def generate_ai_insight(transactions: list[dict], focus: str | None = None) -> dict:
+def generate_ai_insight(aggregated_data: dict, focus: str | None = None) -> dict:
     api_key, base_url, model, provider = _llm_settings()
 
     if not api_key:
@@ -72,14 +90,14 @@ def generate_ai_insight(transactions: list[dict], focus: str | None = None) -> d
         )
 
     system_prompt = (
-        "You are a personal finance assistant. Analyze the user's transactions and return "
+        "You are a personal finance assistant. Analyze the user's financial aggregations and return "
         "a short, practical insight with 2-3 concrete actions. Keep response under 120 words."
     )
     user_prompt = (
-        "Here are recent transactions:\n"
-        f"{_serialize_transactions(transactions)}\n\n"
+        "Here is the user's financial summary:\n"
+        f"{_serialize_aggregation(aggregated_data)}\n\n"
         f"Focus area: {focus if focus else 'overall spending and savings'}\n\n"
-        "Return a concise spending insight and next best actions."
+        "Return a concise spending insight and next best actions based on the data above."
     )
 
     insight = _call_chat_completion(
