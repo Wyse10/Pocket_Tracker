@@ -15,6 +15,7 @@ Current implemented features:
 - Store transactions in a local SQLite database
 - Normalize category names (trim + title case)
 - List all saved transactions as JSON through an API endpoint
+- Generate AI-powered spending suggestions from transaction history (LLM-backed)
 
 ## Tech Stack
 
@@ -68,6 +69,9 @@ Current implemented features:
 - `GET /transactions`  
   Returns all transactions (newest first).
 
+- `GET /ai-suggestions`
+  Generates AI-based spending insight from current transaction history.
+
 ## Local Setup
 
 1. Clone the repository
@@ -89,12 +93,33 @@ Current implemented features:
    pip install -r requirements.txt
    ```
 
-4. Run the app
+4. Configure AI provider (recommended for suggestions endpoint)
+
+  Windows (PowerShell):
+  ```powershell
+  $env:GROQ_API_KEY="your_groq_api_key"
+  ```
+
+  Optional OpenAI-compatible overrides:
+  - `LLM_API_KEY` (takes precedence over `GROQ_API_KEY`)
+  - `LLM_BASE_URL` (default: `https://api.groq.com/openai/v1`)
+  - `LLM_MODEL` (default: `llama-3.1-8b-instant`)
+  - `LLM_PROVIDER_NAME` (default: `groq-llama`)
+
+  Example for xAI Grok compatibility:
+  ```powershell
+  $env:LLM_API_KEY="your_xai_api_key"
+  $env:LLM_BASE_URL="https://api.x.ai/v1"
+  $env:LLM_MODEL="grok-2-latest"
+  $env:LLM_PROVIDER_NAME="xai-grok"
+  ```
+
+5. Run the app
    ```bash
    uvicorn app.main:app --reload
    ```
 
-5. Open in your browser
+6. Open in your browser
    - App UI: http://127.0.0.1:8000
    - API docs (Swagger): http://127.0.0.1:8000/docs
 

@@ -7,7 +7,8 @@ def create_transaction(db: Session, payload: schemas.TransactionCreate) -> model
     tx = models.Transaction(
         amount=payload.amount,
         type=payload.type,
-        category=payload.category.strip().title(),
+        category=payload.category.strip(),
+        description=payload.description.strip() if payload.description and payload.description.strip() else None,
         date=payload.date,
     )
     db.add(tx)

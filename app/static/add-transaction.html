@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body class="bg-slate-100 min-h-screen">
-  <main class="max-w-3xl mx-auto px-4 py-8">
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
     <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
       <div class="flex items-center justify-between gap-3 mb-6">
         <div>
@@ -36,9 +36,25 @@
 
         <div>
           <label for="category" class="block text-sm font-medium text-slate-700">Category</label>
-          <input id="category" name="category" type="text" maxlength="100" required
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                 placeholder="Salary, Food, Transport">
+          <select id="category" name="category" required
+                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="Food &amp; Drink" selected>Food &amp; Drink</option>
+            <option value="Transport">Transport</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Health">Health</option>
+            <option value="Salary">Salary</option>
+            <option value="Utility">Utility</option>
+            <option value="Housing">Housing</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-medium text-slate-700">Description (Optional)</label>
+          <input id="description" name="description" type="text" maxlength="500"
+                 placeholder="Add a note for this transaction"
+                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
         </div>
 
         <div>
@@ -57,6 +73,41 @@
 
       <p id="message" class="mt-4 text-sm"></p>
     </div>
+
+    <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">AI Finance Chat</h2>
+          <p class="text-slate-600 text-sm">Ask about spending, saving, and budget patterns.</p>
+        </div>
+        <a href="/docs" class="text-sm text-blue-600 hover:underline">API Docs</a>
+      </div>
+
+      <form id="ai-chat-form" class="space-y-3">
+        <label for="ai-question" class="block text-sm font-medium text-slate-700">Your question</label>
+        <textarea
+          id="ai-question"
+          name="question"
+          rows="3"
+          required
+          maxlength="400"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="How much did I spend on transport last week?"
+        ></textarea>
+
+        <button
+          id="ai-chat-submit"
+          type="submit"
+          class="rounded-lg bg-slate-900 text-white px-4 py-2.5 font-medium hover:bg-slate-800 transition"
+        >
+          Ask AI
+        </button>
+      </form>
+
+      <div id="ai-chat-response" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm text-slate-500">AI answers will appear here.</p>
+      </div>
+    </section>
   </main>
 
   <script src="/static/js/add-transaction.js"></script>
