@@ -18,8 +18,15 @@ def normalize_transaction_type(raw_type: str) -> str:
 
 def normalize_category(raw_category: str) -> str:
     normalized = raw_category.strip()
-    if normalized.lower() in {"food", "food & drink", "food and drink"}:
+    lookup = normalized.lower()
+    if lookup in {"food", "food & drink", "food and drink"}:
         return "Food & Drink"
+    if lookup in {"gift recieved", "gift received", "gift"}:
+        return "Gift Received"
+    if lookup in {"enterianment", "entertainment"}:
+        return "Entertainment"
+    if lookup in {"healt", "health"}:
+        return "Health"
     return normalized
 
 
