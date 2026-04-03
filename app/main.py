@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-from .ai_insights import generate_ai_chat_reply, generate_ai_insight
+from .ai_insights import generate_ai_insight
 from . import crud, models, schemas
 from .database import Base, engine, get_db
 
@@ -104,19 +104,3 @@ def create_ai_suggestion(payload: schemas.AIInsightRequest, db: Session = Depend
         for tx in transactions
     ]
     return generate_ai_insight(tx_payload, focus=payload.focus)
-
-
-@app.post("/ai-chat", response_model=schemas.AIChatResponse)
-def ai_chat(payload: schemas.AIChatRequest, db: Session = Depends(get_db)):
-    transactions = crud.list_transactions(db)
-    tx_payload = [
-        {
-            "amount": tx.amount,
-            "type": tx.type,
-            "category": tx.category,
-            "description": tx.description,
-            "date": tx.date,
-        }
-        for tx in transactions
-    ]
-    return generate_ai_chat_reply(payload.question, tx_payload)

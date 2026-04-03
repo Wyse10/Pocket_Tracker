@@ -74,40 +74,6 @@
       <p id="message" class="mt-4 text-sm"></p>
     </div>
 
-    <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
-      <div class="flex items-center justify-between gap-3 mb-4">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-900">AI Finance Chat</h2>
-          <p class="text-slate-600 text-sm">Ask about spending, saving, and budget patterns.</p>
-        </div>
-        <a href="/docs" class="text-sm text-blue-600 hover:underline">API Docs</a>
-      </div>
-
-      <form id="ai-chat-form" class="space-y-3">
-        <label for="ai-question" class="block text-sm font-medium text-slate-700">Your question</label>
-        <textarea
-          id="ai-question"
-          name="question"
-          rows="3"
-          required
-          maxlength="400"
-          class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          placeholder="How much did I spend on transport last week?"
-        ></textarea>
-
-        <button
-          id="ai-chat-submit"
-          type="submit"
-          class="rounded-lg bg-slate-900 text-white px-4 py-2.5 font-medium hover:bg-slate-800 transition"
-        >
-          Ask AI
-        </button>
-      </form>
-
-      <div id="ai-chat-response" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <p class="text-sm text-slate-500">AI answers will appear here.</p>
-      </div>
-    </section>
   </main>
 
   <script src="/static/js/add-transaction.js"></script>

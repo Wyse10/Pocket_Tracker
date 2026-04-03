@@ -39,16 +39,6 @@ class AIInsightRequest(BaseModel):
     )
 
 
-class AIChatRequest(BaseModel):
-    question: str = Field(..., min_length=2, max_length=400)
-
-
-class AIChatResponse(BaseModel):
-    provider: str
-    model: str
-    answer: str
-
-
 class CategoryOptionsRequest(BaseModel):
     transaction_type: Literal["income", "expense"] | None = None
 
