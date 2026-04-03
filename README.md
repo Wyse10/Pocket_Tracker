@@ -98,15 +98,16 @@ Current implemented features:
    ```bash
    ```
 
-4. Configure AI provider (recommended for suggestions endpoint)
+4. Configure AI provider (LLaMA on Groq)
 
   Windows (PowerShell):
   ```powershell
   $env:GROQ_API_KEY="your_groq_api_key"
+  $env:LLM_MODEL="llama-3.1-8b-instant"
   ```
 
   Optional OpenAI-compatible overrides:
-  - `LLM_API_KEY` (takes precedence over `GROQ_API_KEY`)
+  - `LLM_API_KEY` (used only if `GROQ_API_KEY` is not set)
   - `LLM_BASE_URL` (default: `https://api.groq.com/openai/v1`)
   - `LLM_MODEL` (default: `llama-3.1-8b-instant`)
   - `LLM_PROVIDER_NAME` (default: `groq-llama`)

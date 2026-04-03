@@ -39,7 +39,7 @@ def _serialize_aggregation(agg_data: dict) -> str:
 
 
 def _llm_settings() -> tuple[str, str, str, str]:
-    api_key = os.getenv("LLM_API_KEY") or os.getenv("GROQ_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY")
     base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
     model = os.getenv("LLM_MODEL", "llama-3.1-8b-instant")
     provider = os.getenv("LLM_PROVIDER_NAME", "groq-llama")
@@ -86,15 +86,29 @@ def generate_ai_insight(aggregated_data: dict, focus: str | None = None) -> dict
     if not api_key:
         raise HTTPException(
             status_code=503,
-            detail="LLM API key not configured. Set LLM_API_KEY (or GROQ_API_KEY).",
+            detail="LLM API key not configured. Set GROQ_API_KEY for Groq LLaMA (or LLM_API_KEY).",
         )
 
     system_prompt = (
-        "You are a personal finance assistant. Analyze the user's financial aggregations and return "
-        "a short, practical insight with 2-3 concrete actions. Keep response under 120 words."
+        "You are a strict and intelligent financial advisor."
+        "Your task is to analyze a user's financial behavior and provide structured advice"
+        "Instructions:"
+        " - Be concise and practical"
+        " - Use bullet points"
+        " - Use numbers and percentages"
+        " - Highlight risks clearly"
+        " - Give actionable advice"
+        
+        "Output Format:"
+        "1. Key Insights"
+        "2. Risks"
+        "3. Recommendations"
+        "4. Financial Score (0-100)"
     )
+
+
     user_prompt = (
-        "Here is the user's financial summary:\n"
+        "Here is the user's Financial Data:\n"
         f"{_serialize_aggregation(aggregated_data)}\n\n"
         f"Focus area: {focus if focus else 'overall spending and savings'}\n\n"
         "Return a concise spending insight and next best actions based on the data above."
