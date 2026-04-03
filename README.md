@@ -14,7 +14,8 @@ Current implemented features:
 - Validate transaction data on the backend
 - Store transactions in a local SQLite database
 - Normalize category names (trim + title case)
-- List all saved transactions as JSON through an API endpoint
+- Browse saved transactions in a paginated table with category/type filters
+- List transactions as paginated JSON through an API endpoint
 - Generate AI-powered spending suggestions from transaction history (LLM-backed)
 
 ## Tech Stack
@@ -67,7 +68,12 @@ Current implemented features:
   ```
 
 - `GET /transactions`  
-  Returns all transactions (newest first).
+  Returns paginated transactions (newest first) with optional `page`, `page_size`, `type`, and `category` query parameters.
+
+  Example:
+  ```text
+  /transactions?page=1&page_size=10&type=expense&category=Food%20%26%20Drink
+  ```
 
 - `GET /ai-suggestions`
   Generates AI-based spending insight from current transaction history.

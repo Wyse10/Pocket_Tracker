@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class TransactionCreate(BaseModel):
     amount: float = Field(..., gt=0)
-    type: Literal["income", "expense"]
+    type: str = Field(..., min_length=1, max_length=20)
     category: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=500)
     date: date
@@ -50,3 +50,16 @@ class CategoryOptionsResponse(BaseModel):
 class DashboardSummaryResponse(BaseModel):
     total_balance: float
     monthly_spending: float
+
+
+class TransactionPageResponse(BaseModel):
+    items: list[TransactionRead]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class TransactionDeleteResponse(BaseModel):
+    message: str
+    deleted_id: int

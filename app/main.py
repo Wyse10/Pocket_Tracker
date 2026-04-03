@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
@@ -59,14 +59,35 @@ def add_transaction(payload: schemas.TransactionCreate, db: Session = Depends(ge
     return crud.create_transaction(db, payload)
 
 
+@app.delete("/transactions/{transaction_id}", response_model=schemas.TransactionDeleteResponse)
+def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
+    deleted = crud.delete_transaction(db, transaction_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    return {"message": "Transaction deleted.", "deleted_id": transaction_id}
+
+
 @app.post("/categories", response_model=schemas.CategoryOptionsResponse)
 def get_categories(payload: schemas.CategoryOptionsRequest):
     return {"categories": CATEGORY_OPTIONS}
 
 
-@app.get("/transactions", response_model=list[schemas.TransactionRead])
-def get_transactions(db: Session = Depends(get_db)):
-    return crud.list_transactions(db)
+@app.get("/transactions", response_model=schemas.TransactionPageResponse)
+def get_transactions(
+    db: Session = Depends(get_db),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    transaction_type: str | None = Query(default=None, alias="type"),
+    category: str | None = Query(default=None),
+):
+    return crud.get_transactions_page(
+        db,
+        page=page,
+        page_size=page_size,
+        transaction_type=transaction_type.strip() if transaction_type else None,
+        category=category.strip() if category else None,
+    )
 
 
 @app.get("/dashboard-summary", response_model=schemas.DashboardSummaryResponse)
