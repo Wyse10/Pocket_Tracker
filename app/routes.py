@@ -89,16 +89,6 @@ def signup(payload: schemas.UserAuthRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    migrated_count = 0
-    user_count = int(db.query(func.count(User.id)).scalar() or 0)
-    if user_count == 1:
-        migrated_count = (
-            db.query(Transaction)
-            .filter(Transaction.user_id.is_(None))
-            .update({Transaction.user_id: new_user.id}, synchronize_session=False)
-        )
-        db.commit()
-
     raw_token = create_session_token()
     session = UserSession(
         user_id=new_user.id,
@@ -110,7 +100,7 @@ def signup(payload: schemas.UserAuthRequest, db: Session = Depends(get_db)):
 
     response = JSONResponse(
         content={
-            "message": f"Account created successfully. Migrated {migrated_count} legacy transaction(s).",
+            "message": "Account created successfully.",
             "user": {"id": new_user.id, "full_name": new_user.full_name, "email": new_user.email},
         }
     )
@@ -172,23 +162,6 @@ def logout(
     response = JSONResponse(content={"message": "Signed out."})
     response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
     return response
-
-
-@router.post("/auth/claim-legacy-transactions", response_model=schemas.LegacyClaimResponse)
-def claim_legacy_transactions(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    migrated_count = (
-        db.query(Transaction)
-        .filter(Transaction.user_id.is_(None))
-        .update({Transaction.user_id: current_user.id}, synchronize_session=False)
-    )
-    db.commit()
-    return {
-        "message": "Legacy transactions claimed for current user.",
-        "migrated_count": int(migrated_count),
-    }
 
 
 @router.get("/auth/me", response_model=schemas.UserRead)

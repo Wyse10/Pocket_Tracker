@@ -41,44 +41,7 @@
     });
   }
 
-  function attachClaimLegacyHandler() {
-    const claimButton = document.getElementById('claim-legacy-button');
-    const claimStatus = document.getElementById('claim-legacy-status');
 
-    if (!claimButton) {
-      return;
-    }
-
-    claimButton.addEventListener('click', async () => {
-      claimButton.disabled = true;
-      const previousText = claimButton.textContent;
-      claimButton.textContent = 'Claiming...';
-      if (claimStatus) {
-        claimStatus.textContent = 'Claiming legacy transactions...';
-      }
-
-      try {
-        const result = await window.apiClient.postJson(
-          '/auth/claim-legacy-transactions',
-          {},
-          'Failed to claim legacy transactions.'
-        );
-        const migratedCount = Number(result?.migrated_count || 0);
-        if (claimStatus) {
-          claimStatus.textContent = migratedCount
-            ? `Successfully migrated ${migratedCount} legacy transaction(s).`
-            : 'No legacy transactions were found to migrate.';
-        }
-      } catch (error) {
-        if (claimStatus) {
-          claimStatus.textContent = error?.message || 'Failed to claim legacy transactions.';
-        }
-      } finally {
-        claimButton.disabled = false;
-        claimButton.textContent = previousText;
-      }
-    });
-  }
 
   function renderUserGreeting(user) {
     const greetingElement = document.getElementById('user-greeting');
@@ -99,7 +62,6 @@
 
     renderUserGreeting(user);
     attachLogoutHandler();
-    attachClaimLegacyHandler();
     return user;
   })();
 })();

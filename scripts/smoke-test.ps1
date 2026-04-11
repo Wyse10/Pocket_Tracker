@@ -75,9 +75,6 @@ try {
     $summary = Invoke-RestMethod -Uri "$baseUrl/dashboard-summary" -Method Get -WebSession $session
     Assert-True -Condition ($null -ne $summary.total_balance) -Message "Dashboard summary failed: missing total_balance."
 
-    $claim = Invoke-RestMethod -Uri "$baseUrl/auth/claim-legacy-transactions" -Method Post -WebSession $session -ContentType "application/json" -Body "{}"
-    Assert-True -Condition ($null -ne $claim.migrated_count) -Message "Claim legacy endpoint failed."
-
     $null = Invoke-RestMethod -Uri "$baseUrl/auth/logout" -Method Post -WebSession $session -ContentType "application/json" -Body "{}"
 
     $unauthorizedOk = $false
@@ -98,11 +95,9 @@ try {
     $me = Invoke-RestMethod -Uri "$baseUrl/auth/me" -Method Get -WebSession $session2
     Assert-True -Condition ($me.email -eq $email) -Message "Auth me failed: wrong user returned."
 
-    Write-Host ""
     Write-Host "Smoke test passed."
     Write-Host "  User: $email"
     Write-Host "  Transaction ID: $($tx.id)"
-    Write-Host "  Claimed legacy count: $($claim.migrated_count)"
     exit 0
 }
 catch {

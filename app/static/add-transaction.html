@@ -214,14 +214,6 @@
       flex-wrap: wrap;
     }
 
-    .claim-status {
-      width: 100%;
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
     .user-greeting {
       margin-right: auto;
       color: var(--muted);
@@ -345,12 +337,10 @@
       <div class="top-links">
         <div class="top-links-row">
           <span id="user-greeting" class="user-greeting"></span>
-          <button id="claim-legacy-button" type="button" class="quick-dashboard-link">Claim Old Transactions</button>
           <a class="quick-dashboard-link" href="/dashboard">Open Dashboard</a>
           <a class="quick-dashboard-link" href="/ai-insights">AI Insights</a>
           <button id="logout-button" type="button" class="quick-dashboard-link">Logout</button>
         </div>
-        <p id="claim-legacy-status" class="claim-status" aria-live="polite"></p>
       </div>
 
       <form id="transaction-form" class="form-grid">

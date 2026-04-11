@@ -175,7 +175,6 @@ The script validates:
 - account signup
 - authenticated transaction creation
 - user-scoped transactions and dashboard summary
-- legacy transaction claim endpoint
 - logout protection (401 expected)
 - login and `/auth/me`
 

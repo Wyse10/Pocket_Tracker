@@ -94,7 +94,3 @@ class AuthResponse(BaseModel):
     message: str
     user: UserRead
 
-
-class LegacyClaimResponse(BaseModel):
-    message: str
-    migrated_count: int
