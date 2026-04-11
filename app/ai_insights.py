@@ -47,7 +47,7 @@ def _serialize_aggregation(agg_data: dict) -> str:
     # Category breakdown
     category_breakdown = agg_data.get("category_breakdown", {})
     if category_breakdown:
-        lines.append("Expense Breakdown by Category:")
+        lines.append("Current Month Expense Breakdown by Category:")
         for category, data in list(category_breakdown.items())[:5]:
             lines.append(f"  - {category}: ${data.get('total', 0):.2f} ({data.get('percentage', 0):.1f}%)")
         lines.append("")

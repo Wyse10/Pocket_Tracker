@@ -16,6 +16,7 @@ Current implemented features:
 - Normalize category names (trim + title case)
 - Browse saved transactions in a paginated table with category/type filters
 - List transactions as paginated JSON through an API endpoint
+- Open a dedicated real-time dashboard session with live metric refresh and charts
 - Generate AI-powered spending suggestions from transaction history (LLM-backed)
 
 ## Tech Stack
@@ -36,11 +37,13 @@ Current implemented features:
 │  ├─ schemas.py             # Pydantic schemas
 │  ├─ crud.py                # Create/list transaction logic
 │  └─ static/
+│     ├─ dashboard.html
 │     ├─ add-transaction.html
 │     ├─ ai-insights.html
 │     ├─ css/
 │     │  └─ styles.css
 │     └─ js/
+│        ├─ dashboard.js
 │        └─ add-transaction.js
 ├─ requirements.txt
 ├─ PRD.md
@@ -54,6 +57,9 @@ Current implemented features:
 
 - `GET /add-transaction`  
   Serves the add transaction page directly.
+
+- `GET /dashboard`
+  Serves the real-time dashboard page.
 
 - `GET /ai-insights`
   Serves the dedicated AI insights page.
@@ -78,6 +84,15 @@ Current implemented features:
   ```text
   /transactions?page=1&page_size=10&type=expense&category=Food%20%26%20Drink
   ```
+
+- `GET /dashboard-summary`
+  Returns dashboard metrics and chart-ready data:
+  - `income_total`
+  - `expense_total`
+  - `total_balance`
+  - `monthly_spending`
+  - `category_breakdown`
+  - `spending_over_time`
 
 - `GET /ai-suggestions`
   Generates AI-based spending insight from current transaction history.
@@ -179,7 +194,6 @@ If the browser page appears blank:
 ## Roadmap (From PRD)
 
 Planned next features include:
-- Dashboard summary metrics
-- Category and spending-over-time charts
-- Rule-based smart insights
-- Theme preference handling
+- Conversational finance Q&A endpoint (`POST /ai-chat`)
+- Dark mode persistence and dedicated theme module
+- Expanded budgeting and savings recommendation workflows

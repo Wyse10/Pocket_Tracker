@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartSpend AI - Dashboard</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --green: #047857;
+      --red: #be123c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+
+    .left-access {
+      position: fixed;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .left-access-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #e2e8f0;
+      color: #1e293b;
+      padding: 12px 16px;
+      border-radius: 0 12px 12px 0;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 140ms ease, filter 140ms ease;
+    }
+
+    .left-access-link.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+    }
+
+    .left-access-link:hover {
+      filter: brightness(0.98);
+      text-decoration: none;
+      transform: translateX(2px);
+    }
+
+    .left-access-link .icon {
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      opacity: 0.9;
+    }
+
+    .left-access-toggle {
+      display: none;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .left-access-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .page-shell {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 32px 16px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 2.35rem;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .page-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .session-bar {
+      margin-top: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e40af;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #2563eb;
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0.4; transform: scale(0.95); }
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #ffffff;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .metric-grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      padding: 20px;
+    }
+
+    .metric-label {
+      margin: 0;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+    }
+
+    .metric-value {
+      margin: 10px 0 0;
+      font-size: 1.85rem;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .chart-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .chart-box {
+      min-height: 360px;
+    }
+
+    .empty-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .trend-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .trend-controls label {
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .trend-controls select {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font: inherit;
+      color: #0f172a;
+      background: #ffffff;
+    }
+
+    @media (min-width: 680px) {
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .metric-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .chart-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 800px) {
+      .left-access {
+        position: static;
+        transform: none;
+        padding: 12px 16px 0;
+        align-items: flex-start;
+      }
+
+      .left-access-link {
+        border-radius: 10px;
+      }
+
+      .left-access-toggle {
+        display: inline-flex;
+      }
+
+      .left-access-links {
+        margin-top: 8px;
+      }
+
+      .left-access-links[data-open="false"] {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="left-access" aria-label="Primary navigation">
+    <button type="button" class="left-access-toggle" id="left-nav-toggle" aria-expanded="false" aria-controls="left-nav-links">
+      Menu
+    </button>
+    <div class="left-access-links" id="left-nav-links" data-open="true">
+      <a class="left-access-link active" href="/dashboard"><span class="icon">DB</span><span>Dashboard</span></a>
+      <a class="left-access-link" href="/add-transaction"><span class="icon">TX</span><span>Transactions</span></a>
+      <a class="left-access-link" href="/ai-insights"><span class="icon">AI</span><span>AI Insights</span></a>
+    </div>
+  </nav>
+
+  <main class="page-shell">
+    <h1 class="page-title">Real-Time Dashboard Session</h1>
+    <p class="page-subtitle">Live financial summary from your latest transaction data.</p>
+
+    <div class="session-bar">
+      <span class="status-pill" id="session-status"><span class="status-dot" aria-hidden="true"></span><span>Live updates every 10s</span></span>
+      <button type="button" class="btn" id="manual-refresh">Refresh now</button>
+      <p id="last-sync" class="empty-note">Last sync: pending...</p>
+    </div>
+
+    <section class="metric-grid">
+      <article class="card">
+        <p class="metric-label">Income (Overall)</p>
+        <p id="metric-income-total" class="metric-value" style="color: var(--green);">$0.00</p>
+      </article>
+      <article class="card">
+        <p class="metric-label">Expenses (Overall)</p>
+        <p id="metric-expense-total" class="metric-value" style="color: var(--red);">$0.00</p>
+      </article>
+      <article class="card">
+        <p class="metric-label">Balance (Overall)</p>
+        <p id="metric-total-balance" class="metric-value">$0.00</p>
+      </article>
+      <article class="card">
+        <p class="metric-label">Spending (This Month)</p>
+        <p id="metric-monthly-spending" class="metric-value">$0.00</p>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="card">
+        <h2 style="margin-top: 0;">Expense By Category</h2>
+        <p class="empty-note" id="category-empty-note" style="display:none;">No expense data yet to render category chart.</p>
+        <div id="category-chart" class="chart-box" aria-label="Expense category pie chart"></div>
+      </article>
+
+      <article class="card">
+        <div class="chart-head">
+          <h2 style="margin: 0;">Spending Trend</h2>
+          <div class="trend-controls">
+            <label for="trend-granularity">View</label>
+            <select id="trend-granularity" aria-label="Trend granularity">
+              <option value="monthly" selected>Monthly</option>
+              <option value="weekly">Weekly (Last 100 days)</option>
+              <option value="daily">Daily (Last 100 days)</option>
+            </select>
+          </div>
+        </div>
+        <p class="empty-note" id="trend-empty-note" style="display:none;">No spending timeline data yet.</p>
+        <div id="trend-chart" class="chart-box" aria-label="Daily spending line chart"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const toggle = document.getElementById('left-nav-toggle');
+      const links = document.getElementById('left-nav-links');
+      if (!toggle || !links) return;
+
+      function syncByViewport() {
+        if (window.innerWidth <= 800) {
+          links.dataset.open = links.dataset.open || 'false';
+          toggle.setAttribute('aria-expanded', links.dataset.open === 'true' ? 'true' : 'false');
+          return;
+        }
+
+        links.dataset.open = 'true';
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+
+      links.dataset.open = window.innerWidth <= 800 ? 'false' : 'true';
+      syncByViewport();
+
+      toggle.addEventListener('click', () => {
+        const open = links.dataset.open === 'true';
+        links.dataset.open = open ? 'false' : 'true';
+        toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+      });
+
+      window.addEventListener('resize', syncByViewport);
+    })();
+  </script>
+
+  <script src="/static/js/dashboard.js?v=3"></script>
+</body>
+</html>

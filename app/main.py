@@ -71,6 +71,12 @@ def add_transaction_page() -> HTMLResponse:
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@app.get("/dashboard")
+def dashboard_page() -> HTMLResponse:
+    html_path = STATIC_DIR / "dashboard.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
 @app.get("/ai-insights")
 def ai_insights_page() -> HTMLResponse:
     html_path = STATIC_DIR / "ai-insights.html"

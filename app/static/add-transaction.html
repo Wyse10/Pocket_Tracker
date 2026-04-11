@@ -199,8 +199,27 @@
 
     .top-links {
       display: flex;
+      gap: 12px;
       justify-content: flex-end;
+      align-items: center;
       margin-bottom: 20px;
+    }
+
+    .quick-dashboard-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .quick-dashboard-link:hover {
+      background: var(--primary-dark);
+      text-decoration: none;
     }
 
     .left-access {
@@ -340,6 +359,7 @@
       Menu
     </button>
     <div class="left-access-links" id="left-nav-links" data-open="true">
+      <a class="left-access-link" href="/dashboard"><span class="icon">DB</span><span>Dashboard</span></a>
       <a class="left-access-link active" href="/add-transaction"><span class="icon">TX</span><span>Transactions</span></a>
       <a class="left-access-link" href="/ai-insights"><span class="icon">AI</span><span>AI Insights</span></a>
     </div>
@@ -371,6 +391,7 @@
 
     <div class="layout-card">
       <div class="top-links">
+        <a class="quick-dashboard-link" href="/dashboard">Open Dashboard</a>
         <a href="/transactions">View API JSON</a>
       </div>
 

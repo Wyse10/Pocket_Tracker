@@ -51,6 +51,9 @@ class DashboardSummaryResponse(BaseModel):
     income_total: float
     expense_total: float
     total_balance: float
+    monthly_spending: float
+    category_breakdown: dict[str, float]
+    spending_over_time: list[dict[str, float | str]]
 
 
 class TransactionPageResponse(BaseModel):

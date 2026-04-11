@@ -95,7 +95,7 @@ def get_transactions_page(
     }
 
 
-def get_dashboard_summary(db: Session) -> dict[str, float]:
+def get_dashboard_summary(db: Session) -> dict[str, object]:
     income_total = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
         .filter(models.Transaction.type == "income")
@@ -122,10 +122,46 @@ def get_dashboard_summary(db: Session) -> dict[str, float]:
         .scalar()
     )
 
+    category_rows = (
+        db.query(
+            models.Transaction.category,
+            func.coalesce(func.sum(models.Transaction.amount), 0.0).label("total"),
+        )
+        .filter(models.Transaction.type == "expense")
+        .filter(models.Transaction.date >= month_start)
+        .filter(models.Transaction.date < next_month_start)
+        .group_by(models.Transaction.category)
+        .order_by(func.sum(models.Transaction.amount).desc())
+        .all()
+    )
+
+    spending_rows = (
+        db.query(
+            models.Transaction.date,
+            func.coalesce(func.sum(models.Transaction.amount), 0.0).label("total"),
+        )
+        .filter(models.Transaction.type == "expense")
+        .group_by(models.Transaction.date)
+        .order_by(models.Transaction.date.asc())
+        .all()
+    )
+
+    category_breakdown = {
+        str(category): float(total)
+        for category, total in category_rows
+    }
+    spending_over_time = [
+        {"date": tx_date.isoformat(), "total": float(total)}
+        for tx_date, total in spending_rows
+    ]
+
     return {
         "income_total": float(income_total),
         "expense_total": float(expense_total),
         "total_balance": float(income_total) - float(expense_total),
+        "monthly_spending": float(monthly_spending),
+        "category_breakdown": category_breakdown,
+        "spending_over_time": spending_over_time,
     }
 
 
@@ -188,13 +224,15 @@ def get_ai_aggregation_data(db: Session) -> dict:
             func.count(models.Transaction.id).label("count")
         )
         .filter(models.Transaction.type == "expense")
+        .filter(models.Transaction.date >= month_start)
+        .filter(models.Transaction.date < next_month_start)
         .group_by(models.Transaction.category)
         .order_by(func.sum(models.Transaction.amount).desc())
         .all()
     )
 
     # Calculate percentages and format category breakdown
-    expense_total_val = float(expense_total) if float(expense_total) > 0 else 1
+    expense_total_val = float(current_month_spending) if float(current_month_spending) > 0 else 1
     category_breakdown = {}
     top_categories = []
     
