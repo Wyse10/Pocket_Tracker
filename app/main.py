@@ -10,7 +10,7 @@ from .ai_insights import generate_ai_insight
 from . import crud, models, schemas
 from .database import Base, engine, get_db
 
-app = FastAPI(title="SmartSpend AI")
+app = FastAPI(title="Pocket Tracker")
 
 CATEGORY_OPTIONS_BY_TYPE: dict[str, list[str]] = {
     "income": [
