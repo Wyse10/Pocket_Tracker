@@ -34,12 +34,12 @@ def _serialize_aggregation(agg_data: dict) -> str:
     Includes totals, category breakdown, percentages, and trends.
     """
     lines = [
-        f"Income (Overall): ${agg_data.get('income_total', 0):.2f}",
-        f"Expenses (Overall): ${agg_data.get('expense_total', 0):.2f}",
-        f"Net Balance: ${agg_data.get('net_balance', 0):.2f}",
+        f"Income (Overall): GH₵{agg_data.get('income_total', 0):.2f}",
+        f"Expenses (Overall): GH₵{agg_data.get('expense_total', 0):.2f}",
+        f"Net Balance: GH₵{agg_data.get('net_balance', 0):.2f}",
         "",
-        f"Current Month Spending: ${agg_data.get('current_month_spending', 0):.2f}",
-        f"Previous Month Spending: ${agg_data.get('previous_month_spending', 0):.2f}",
+        f"Current Month Spending: GH₵{agg_data.get('current_month_spending', 0):.2f}",
+        f"Previous Month Spending: GH₵{agg_data.get('previous_month_spending', 0):.2f}",
         f"Month-over-Month Change: {agg_data.get('month_over_month_change_pct', 0):.1f}%",
         "",
     ]
@@ -49,14 +49,14 @@ def _serialize_aggregation(agg_data: dict) -> str:
     if category_breakdown:
         lines.append("Current Month Expense Breakdown by Category:")
         for category, data in list(category_breakdown.items())[:5]:
-            lines.append(f"  - {category}: ${data.get('total', 0):.2f} ({data.get('percentage', 0):.1f}%)")
+            lines.append(f"  - {category}: GH₵{data.get('total', 0):.2f} ({data.get('percentage', 0):.1f}%)")
         lines.append("")
     
     # Transaction metrics
     lines.extend([
         f"Total Transactions: {agg_data.get('total_transactions', 0)}",
-        f"Average Expense: ${agg_data.get('average_expense', 0):.2f}",
-        f"Average Income: ${agg_data.get('average_income', 0):.2f}",
+        f"Average Expense: GH₵{agg_data.get('average_expense', 0):.2f}",
+        f"Average Income: GH₵{agg_data.get('average_income', 0):.2f}",
     ])
     
     return "\n".join(lines)

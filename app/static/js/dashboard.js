@@ -15,9 +15,9 @@ let refreshTimer = null;
 let rawSpendingOverTime = [];
 
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-GH', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'GHS',
   }).format(amount);
 }
 
@@ -89,7 +89,7 @@ function renderCategoryChart(categoryBreakdown) {
       labels,
       values,
       textinfo: 'label+percent',
-      hovertemplate: '%{label}<br>%{value:$,.2f}<extra></extra>',
+      hovertemplate: 'GH₵%{value:,.2f}<extra></extra>',
       marker: {
         colors: ['#16a34a', '#2563eb', '#0f766e', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#0ea5e9'],
       },
@@ -225,7 +225,7 @@ function renderTrendChart(spendingOverTime) {
         color: '#1d4ed8',
         size: 7,
       },
-      hovertemplate: '%{x}<br>%{y:$,.2f}<extra></extra>',
+      hovertemplate: '%{x}<br>GH₵%{y:,.2f}<extra></extra>',
     },
   ], {
     margin: { t: 14, r: 12, b: 42, l: 54 },
@@ -235,7 +235,7 @@ function renderTrendChart(spendingOverTime) {
     },
     yaxis: {
       title: 'Spending',
-      tickprefix: '$',
+      tickprefix: 'GH₵',
     },
     showlegend: false,
     paper_bgcolor: 'rgba(0,0,0,0)',
