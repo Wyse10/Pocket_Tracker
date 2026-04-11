@@ -292,12 +292,7 @@ async function fetchAndRenderDashboard() {
   try {
     setLoadingStatus('Syncing live dashboard...');
 
-    const response = await fetch('/dashboard-summary');
-    const payload = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(payload?.detail || 'Failed to load dashboard summary.');
-    }
+    const payload = await window.apiClient.getJson('/dashboard-summary', 'Failed to load dashboard summary.');
 
     renderMetrics(payload);
     latestDashboardPayload = payload;
@@ -346,4 +341,11 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
-startRealtimeSession();
+async function initDashboardPage() {
+  if (window.authGuardReady) {
+    await window.authGuardReady;
+  }
+  startRealtimeSession();
+}
+
+initDashboardPage();

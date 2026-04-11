@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pocket Tracker - Sign In</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ecfeff;
+      --bg-alt: #f8fafc;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #0f766e;
+      --primary-strong: #115e59;
+      --danger: #be123c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.22), transparent 35%),
+        radial-gradient(circle at 80% 75%, rgba(14, 165, 233, 0.18), transparent 42%),
+        linear-gradient(145deg, var(--bg), var(--bg-alt));
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      padding: 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 980px;
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+    }
+
+    @media (min-width: 900px) {
+      .shell {
+        grid-template-columns: 1.05fr 1fr;
+      }
+    }
+
+    .hero,
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 18px 40px rgba(2, 6, 23, 0.08);
+      padding: 26px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #0f766e;
+      background: #ccfbf1;
+      border: 1px solid #99f6e4;
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .list {
+      margin: 18px 0 0;
+      padding-left: 18px;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .tabs {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .tabs button {
+      border: 0;
+      background: #f8fafc;
+      color: #334155;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background: #ccfbf1;
+      color: #0f766e;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .field input:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.24);
+      border-color: var(--primary);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .submit {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: var(--primary);
+      cursor: pointer;
+      transition: transform 120ms ease, background-color 120ms ease;
+    }
+
+    .submit:hover {
+      background: var(--primary-strong);
+      transform: translateY(-1px);
+    }
+
+    .message {
+      margin: 10px 0 0;
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .message.error {
+      color: var(--danger);
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <span class="badge">Pocket Tracker</span>
+      <h1>Private finances, personal insights.</h1>
+      <p class="subtitle">Sign in to see only your transactions, dashboard metrics, and AI recommendations.</p>
+      <ul class="list">
+        <li>Each account has isolated records.</li>
+        <li>Fast sign in with secure session cookies.</li>
+        <li>Dashboard and AI insights are scoped per user.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="tabs" role="tablist" aria-label="Auth mode">
+        <button id="tab-login" class="active" type="button">Sign In</button>
+        <button id="tab-signup" type="button">Create Account</button>
+      </div>
+
+      <form id="auth-form" novalidate>
+        <div id="name-field" class="field hidden">
+          <label for="full-name">Full Name</label>
+          <input id="full-name" name="full_name" type="text" minlength="2" maxlength="120" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required maxlength="255" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password">
+        </div>
+
+        <button id="submit-auth" class="submit" type="submit">Sign In</button>
+        <p id="auth-message" class="message" aria-live="polite"></p>
+      </form>
+
+      <p class="footer-note">Tip: after sign in, you will be redirected to your transaction page.</p>
+    </section>
+  </main>
+
+  <script src="/static/js/shared/api-client.js?v=2"></script>
+  <script src="/static/js/login.js?v=1"></script>
+</body>
+</html>

@@ -1,4 +1,15 @@
 (function initializeApiClient() {
+  function redirectToLogin() {
+    if (window.location.pathname === '/login') {
+      return;
+    }
+
+    const currentPath = `${window.location.pathname}${window.location.search || ''}`;
+    const loginUrl = new URL('/login', window.location.origin);
+    loginUrl.searchParams.set('next', currentPath);
+    window.location.assign(loginUrl.toString());
+  }
+
   async function parseJsonSafe(response) {
     try {
       return await response.json();
@@ -28,6 +39,7 @@
 
     const requestOptions = {
       ...rest,
+      credentials: 'same-origin',
       headers: {
         ...(headers || {}),
       },
@@ -40,6 +52,11 @@
 
     const response = await fetch(url, requestOptions);
     const payload = await parseJsonSafe(response);
+
+    if (response.status === 401) {
+      redirectToLogin();
+      throw new Error('Authentication required.');
+    }
 
     if (!response.ok) {
       throw new Error(errorMessageFromPayload(payload, fallbackMessage));

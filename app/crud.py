@@ -30,9 +30,10 @@ def normalize_category(raw_category: str) -> str:
     return normalized
 
 
-def create_transaction(db: Session, payload: schemas.TransactionCreate) -> models.Transaction:
+def create_transaction(db: Session, payload: schemas.TransactionCreate, user_id: int) -> models.Transaction:
     transaction_type = normalize_transaction_type(payload.type)
     tx = models.Transaction(
+        user_id=user_id,
         amount=payload.amount,
         type=transaction_type,
         category=normalize_category(payload.category),
@@ -45,9 +46,9 @@ def create_transaction(db: Session, payload: schemas.TransactionCreate) -> model
     return tx
 
 
-def delete_transaction(db: Session, transaction_id: int) -> bool:
+def delete_transaction(db: Session, transaction_id: int, user_id: int) -> bool:
     tx = db.get(models.Transaction, transaction_id)
-    if tx is None:
+    if tx is None or tx.user_id != user_id:
         return False
 
     db.delete(tx)
@@ -55,18 +56,24 @@ def delete_transaction(db: Session, transaction_id: int) -> bool:
     return True
 
 
-def list_transactions(db: Session) -> list[models.Transaction]:
-    return db.query(models.Transaction).order_by(models.Transaction.date.desc(), models.Transaction.id.desc()).all()
+def list_transactions(db: Session, user_id: int) -> list[models.Transaction]:
+    return (
+        db.query(models.Transaction)
+        .filter(models.Transaction.user_id == user_id)
+        .order_by(models.Transaction.date.desc(), models.Transaction.id.desc())
+        .all()
+    )
 
 
 def get_transactions_page(
     db: Session,
+    user_id: int,
     page: int = 1,
     page_size: int = 10,
     transaction_type: str | None = None,
     category: str | None = None,
 ) -> dict[str, object]:
-    query = db.query(models.Transaction)
+    query = db.query(models.Transaction).filter(models.Transaction.user_id == user_id)
 
     if transaction_type:
         query = query.filter(models.Transaction.type == transaction_type)
@@ -95,14 +102,16 @@ def get_transactions_page(
     }
 
 
-def get_dashboard_summary(db: Session) -> dict[str, object]:
+def get_dashboard_summary(db: Session, user_id: int) -> dict[str, object]:
     income_total = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "income")
         .scalar()
     )
     expense_total = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .scalar()
     )
@@ -116,6 +125,7 @@ def get_dashboard_summary(db: Session) -> dict[str, object]:
 
     monthly_spending = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .filter(models.Transaction.date >= month_start)
         .filter(models.Transaction.date < next_month_start)
@@ -127,6 +137,7 @@ def get_dashboard_summary(db: Session) -> dict[str, object]:
             models.Transaction.category,
             func.coalesce(func.sum(models.Transaction.amount), 0.0).label("total"),
         )
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .filter(models.Transaction.date >= month_start)
         .filter(models.Transaction.date < next_month_start)
@@ -140,6 +151,7 @@ def get_dashboard_summary(db: Session) -> dict[str, object]:
             models.Transaction.date,
             func.coalesce(func.sum(models.Transaction.amount), 0.0).label("total"),
         )
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .group_by(models.Transaction.date)
         .order_by(models.Transaction.date.asc())
@@ -165,7 +177,7 @@ def get_dashboard_summary(db: Session) -> dict[str, object]:
     }
 
 
-def get_ai_aggregation_data(db: Session) -> dict:
+def get_ai_aggregation_data(db: Session, user_id: int) -> dict:
     """
     Compute aggregated data for AI insights.
     Uses optimized SQLAlchemy queries to avoid N+1 problems.
@@ -189,11 +201,13 @@ def get_ai_aggregation_data(db: Session) -> dict:
     # Overall totals
     income_total = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "income")
         .scalar()
     )
     expense_total = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .scalar()
     )
@@ -201,6 +215,7 @@ def get_ai_aggregation_data(db: Session) -> dict:
     # Current month spending
     current_month_spending = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .filter(models.Transaction.date >= month_start)
         .filter(models.Transaction.date < next_month_start)
@@ -210,6 +225,7 @@ def get_ai_aggregation_data(db: Session) -> dict:
     # Previous month spending
     prev_month_spending = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .filter(models.Transaction.date >= prev_month_start)
         .filter(models.Transaction.date < month_start)
@@ -223,6 +239,7 @@ def get_ai_aggregation_data(db: Session) -> dict:
             func.sum(models.Transaction.amount).label("total"),
             func.count(models.Transaction.id).label("count")
         )
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .filter(models.Transaction.date >= month_start)
         .filter(models.Transaction.date < next_month_start)
@@ -248,11 +265,13 @@ def get_ai_aggregation_data(db: Session) -> dict:
     # Transaction count and averages
     expense_count = (
         db.query(func.count(models.Transaction.id))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "expense")
         .scalar()
     )
     income_count = (
         db.query(func.count(models.Transaction.id))
+        .filter(models.Transaction.user_id == user_id)
         .filter(models.Transaction.type == "income")
         .scalar()
     )

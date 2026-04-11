@@ -344,6 +344,10 @@ tableBody?.addEventListener('click', async (event) => {
 });
 
 async function initPage() {
+  if (window.authGuardReady) {
+    await window.authGuardReady;
+  }
+
   await Promise.all([
     loadCategories(typeSelect?.value || 'expense'),
     loadFilterCategories(filterTypeSelect?.value || 'all', 'all'),

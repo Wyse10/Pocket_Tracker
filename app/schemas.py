@@ -14,6 +14,7 @@ class TransactionCreate(BaseModel):
 
 class TransactionRead(BaseModel):
     id: int
+    user_id: int | None
     amount: float
     type: Literal["income", "expense"]
     category: str
@@ -67,3 +68,33 @@ class TransactionPageResponse(BaseModel):
 class TransactionDeleteResponse(BaseModel):
     message: str
     deleted_id: int
+
+
+class UserAuthRequest(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=120)
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class UserLoginRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class UserRead(BaseModel):
+    id: int
+    full_name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
+class AuthResponse(BaseModel):
+    message: str
+    user: UserRead
+
+
+class LegacyClaimResponse(BaseModel):
+    message: str
+    migrated_count: int

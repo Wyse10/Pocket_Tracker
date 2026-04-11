@@ -41,6 +41,14 @@
       justify-content: flex-end;
       align-items: center;
       margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .user-greeting {
+      margin-right: auto;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.92rem;
     }
 
     .quick-back-link {
@@ -153,7 +161,9 @@
 <body>
   <main class="page-shell">
     <div class="top-links">
+      <span id="user-greeting" class="user-greeting"></span>
       <a class="quick-back-link" href="/add-transaction">Back to Transactions</a>
+      <button id="logout-button" type="button" class="quick-back-link">Logout</button>
     </div>
 
     <h1 class="page-title">AI Insights</h1>
@@ -177,7 +187,8 @@
     </section>
   </main>
 
-  <script src="/static/js/shared/api-client.js?v=1"></script>
-  <script src="/static/js/ai-insights.js?v=2"></script>
+  <script src="/static/js/shared/api-client.js?v=2"></script>
+  <script src="/static/js/shared/auth.js?v=1"></script>
+  <script src="/static/js/ai-insights.js?v=3"></script>
 </body>
 </html>

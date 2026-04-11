@@ -59,6 +59,10 @@ def ensure_schema_updates() -> None:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE transactions ADD COLUMN description VARCHAR"))
 
+    if "user_id" not in existing_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN user_id INTEGER"))
+
 Base.metadata.create_all(bind=engine)
 ensure_schema_updates()
 

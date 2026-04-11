@@ -157,6 +157,28 @@ Current implemented features:
    - App UI: http://127.0.0.1:8000
    - API docs (Swagger): http://127.0.0.1:8000/docs
 
+## Smoke Test
+
+Run the end-to-end auth and user-data isolation smoke test:
+
+```powershell
+.\scripts\smoke-test.ps1
+```
+
+Optional parameters:
+
+```powershell
+.\scripts\smoke-test.ps1 -Port 8011 -BindHost 127.0.0.1
+```
+
+The script validates:
+- account signup
+- authenticated transaction creation
+- user-scoped transactions and dashboard summary
+- legacy transaction claim endpoint
+- logout protection (401 expected)
+- login and `/auth/me`
+
 ## Data Model
 
 `transactions` table fields:

@@ -1,13 +1,27 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .ai_insights import generate_ai_insight
 from . import crud, schemas
+from .auth import (
+    SESSION_COOKIE_NAME,
+    SESSION_DURATION_HOURS,
+    create_password_hash,
+    create_session_token,
+    get_current_user,
+    get_current_user_optional,
+    hash_session_token,
+    normalize_email,
+    session_expires_at,
+    verify_password,
+)
 from .constants import ALL_CATEGORY_OPTIONS, CATEGORY_OPTIONS_BY_TYPE
 from .database import get_db
+from .models import Transaction, User, UserSession
 
 
 router = APIRouter()
@@ -17,37 +31,187 @@ STATIC_DIR = BASE_DIR / "static"
 
 
 @router.get("/")
-def root() -> HTMLResponse:
-    html_path = STATIC_DIR / "add-transaction.html"
+def root(current_user: User | None = Depends(get_current_user_optional)) -> RedirectResponse:
+    if current_user:
+        return RedirectResponse(url="/add-transaction", status_code=303)
+    return RedirectResponse(url="/login", status_code=303)
+
+
+@router.get("/login")
+def login_page(current_user: User | None = Depends(get_current_user_optional)):
+    if current_user:
+        return RedirectResponse(url="/add-transaction", status_code=303)
+
+    html_path = STATIC_DIR / "login.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @router.get("/add-transaction")
-def add_transaction_page() -> HTMLResponse:
+def add_transaction_page(current_user: User | None = Depends(get_current_user_optional)):
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=303)
+
     html_path = STATIC_DIR / "add-transaction.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @router.get("/dashboard")
-def dashboard_page() -> HTMLResponse:
+def dashboard_page(current_user: User | None = Depends(get_current_user_optional)):
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=303)
+
     html_path = STATIC_DIR / "dashboard.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @router.get("/ai-insights")
-def ai_insights_page() -> HTMLResponse:
+def ai_insights_page(current_user: User | None = Depends(get_current_user_optional)):
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=303)
+
     html_path = STATIC_DIR / "ai-insights.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@router.post("/auth/signup", response_model=schemas.AuthResponse)
+def signup(payload: schemas.UserAuthRequest, db: Session = Depends(get_db)):
+    email = normalize_email(payload.email)
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="An account with this email already exists.")
+
+    new_user = User(
+        full_name=payload.full_name.strip(),
+        email=email,
+        password_hash=create_password_hash(payload.password),
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    migrated_count = 0
+    user_count = int(db.query(func.count(User.id)).scalar() or 0)
+    if user_count == 1:
+        migrated_count = (
+            db.query(Transaction)
+            .filter(Transaction.user_id.is_(None))
+            .update({Transaction.user_id: new_user.id}, synchronize_session=False)
+        )
+        db.commit()
+
+    raw_token = create_session_token()
+    session = UserSession(
+        user_id=new_user.id,
+        token_hash=hash_session_token(raw_token),
+        expires_at=session_expires_at(),
+    )
+    db.add(session)
+    db.commit()
+
+    response = JSONResponse(
+        content={
+            "message": f"Account created successfully. Migrated {migrated_count} legacy transaction(s).",
+            "user": {"id": new_user.id, "full_name": new_user.full_name, "email": new_user.email},
+        }
+    )
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=raw_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=SESSION_DURATION_HOURS * 3600,
+    )
+    return response
+
+
+@router.post("/auth/login", response_model=schemas.AuthResponse)
+def login(payload: schemas.UserLoginRequest, db: Session = Depends(get_db)):
+    email = normalize_email(payload.email)
+    user = db.query(User).filter(User.email == email).first()
+    if user is None or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    # Keep one active session per user for predictable behavior.
+    db.query(UserSession).filter(UserSession.user_id == user.id).delete()
+    raw_token = create_session_token()
+    session = UserSession(
+        user_id=user.id,
+        token_hash=hash_session_token(raw_token),
+        expires_at=session_expires_at(),
+    )
+    db.add(session)
+    db.commit()
+
+    response = JSONResponse(
+        content={
+            "message": "Signed in successfully.",
+            "user": {"id": user.id, "full_name": user.full_name, "email": user.email},
+        }
+    )
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=raw_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=SESSION_DURATION_HOURS * 3600,
+    )
+    return response
+
+
+@router.post("/auth/logout")
+def logout(
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    if current_user:
+        db.query(UserSession).filter(UserSession.user_id == current_user.id).delete()
+        db.commit()
+
+    response = JSONResponse(content={"message": "Signed out."})
+    response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
+    return response
+
+
+@router.post("/auth/claim-legacy-transactions", response_model=schemas.LegacyClaimResponse)
+def claim_legacy_transactions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    migrated_count = (
+        db.query(Transaction)
+        .filter(Transaction.user_id.is_(None))
+        .update({Transaction.user_id: current_user.id}, synchronize_session=False)
+    )
+    db.commit()
+    return {
+        "message": "Legacy transactions claimed for current user.",
+        "migrated_count": int(migrated_count),
+    }
+
+
+@router.get("/auth/me", response_model=schemas.UserRead)
+def auth_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
 @router.post("/add-transaction", response_model=schemas.TransactionRead)
-def add_transaction(payload: schemas.TransactionCreate, db: Session = Depends(get_db)):
-    return crud.create_transaction(db, payload)
+def add_transaction(
+    payload: schemas.TransactionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return crud.create_transaction(db, payload, user_id=current_user.id)
 
 
 @router.delete("/transactions/{transaction_id}", response_model=schemas.TransactionDeleteResponse)
-def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
-    deleted = crud.delete_transaction(db, transaction_id)
+def delete_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    deleted = crud.delete_transaction(db, transaction_id, user_id=current_user.id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
@@ -65,6 +229,7 @@ def get_categories(payload: schemas.CategoryOptionsRequest):
 @router.get("/transactions", response_model=schemas.TransactionPageResponse)
 def get_transactions(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     transaction_type: str | None = Query(default=None, alias="type"),
@@ -72,6 +237,7 @@ def get_transactions(
 ):
     return crud.get_transactions_page(
         db,
+        user_id=current_user.id,
         page=page,
         page_size=page_size,
         transaction_type=transaction_type.strip() if transaction_type else None,
@@ -80,17 +246,21 @@ def get_transactions(
 
 
 @router.get("/dashboard-summary", response_model=schemas.DashboardSummaryResponse)
-def get_dashboard_summary(db: Session = Depends(get_db)):
-    return crud.get_dashboard_summary(db)
+def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.get_dashboard_summary(db, user_id=current_user.id)
 
 
 @router.get("/ai-suggestions", response_model=schemas.AIInsightResponse)
-def get_ai_suggestions(db: Session = Depends(get_db)):
-    aggregated_data = crud.get_ai_aggregation_data(db)
+def get_ai_suggestions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    aggregated_data = crud.get_ai_aggregation_data(db, user_id=current_user.id)
     return generate_ai_insight(aggregated_data)
 
 
 @router.post("/ai-suggestions", response_model=schemas.AIInsightResponse)
-def create_ai_suggestion(payload: schemas.AIInsightRequest, db: Session = Depends(get_db)):
-    aggregated_data = crud.get_ai_aggregation_data(db)
+def create_ai_suggestion(
+    payload: schemas.AIInsightRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    aggregated_data = crud.get_ai_aggregation_data(db, user_id=current_user.id)
     return generate_ai_insight(aggregated_data, focus=payload.focus)

@@ -25,6 +25,10 @@ function setAiState({ status = '', insight = '', meta = '', isError = false, isL
 }
 
 async function generateAiInsight() {
+  if (window.authGuardReady) {
+    await window.authGuardReady;
+  }
+
   if (!generateAiInsightButton || !aiInsight) {
     return;
   }
