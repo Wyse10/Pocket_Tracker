@@ -29,69 +29,35 @@
       min-height: 100vh;
     }
 
-    .left-access {
-      position: fixed;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .left-access-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #e2e8f0;
-      color: #1e293b;
-      padding: 12px 16px;
-      border-radius: 0 12px 12px 0;
-      font-weight: 700;
-      text-decoration: none;
-      transition: transform 140ms ease, filter 140ms ease;
-    }
-
-    .left-access-link.active {
-      background: var(--primary);
-      color: #ffffff;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
-    }
-
-    .left-access-link:hover {
-      filter: brightness(0.98);
-      text-decoration: none;
-      transform: translateX(2px);
-    }
-
-    .left-access-link .icon {
-      font-size: 0.85rem;
-      letter-spacing: 0.04em;
-      opacity: 0.9;
-    }
-
-    .left-access-toggle {
-      display: none;
-      border: 1px solid var(--border);
-      background: #ffffff;
-      color: #0f172a;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .left-access-links {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
     .page-shell {
       max-width: 860px;
       margin: 0 auto;
       padding: 32px 16px;
+    }
+
+    .top-links {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .quick-back-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .quick-back-link:hover {
+      background: var(--primary-dark);
+      text-decoration: none;
     }
 
     .page-title {
@@ -182,45 +148,14 @@
       line-height: 1.5;
     }
 
-    @media (max-width: 800px) {
-      .left-access {
-        position: static;
-        transform: none;
-        padding: 12px 16px 0;
-        align-items: flex-start;
-      }
-
-      .left-access-link {
-        border-radius: 10px;
-      }
-
-      .left-access-toggle {
-        display: inline-flex;
-      }
-
-      .left-access-links {
-        margin-top: 8px;
-      }
-
-      .left-access-links[data-open="false"] {
-        display: none;
-      }
-    }
   </style>
 </head>
 <body>
-  <nav class="left-access" aria-label="Primary navigation">
-    <button type="button" class="left-access-toggle" id="left-nav-toggle" aria-expanded="false" aria-controls="left-nav-links">
-      Menu
-    </button>
-    <div class="left-access-links" id="left-nav-links" data-open="true">
-      <a class="left-access-link" href="/dashboard"><span class="icon">DB</span><span>Dashboard</span></a>
-      <a class="left-access-link" href="/add-transaction"><span class="icon">TX</span><span>Transactions</span></a>
-      <a class="left-access-link active" href="/ai-insights"><span class="icon">AI</span><span>AI Insights</span></a>
-    </div>
-  </nav>
-
   <main class="page-shell">
+    <div class="top-links">
+      <a class="quick-back-link" href="/add-transaction">Back to Transactions</a>
+    </div>
+
     <h1 class="page-title">AI Insights</h1>
     <p class="page-subtitle">Generate practical advice from your transaction history.</p>
 
@@ -241,36 +176,6 @@
       </div>
     </section>
   </main>
-
-  <script>
-    (function () {
-      const toggle = document.getElementById('left-nav-toggle');
-      const links = document.getElementById('left-nav-links');
-      if (!toggle || !links) return;
-
-      function syncByViewport() {
-        if (window.innerWidth <= 800) {
-          links.dataset.open = links.dataset.open || 'false';
-          toggle.setAttribute('aria-expanded', links.dataset.open === 'true' ? 'true' : 'false');
-          return;
-        }
-
-        links.dataset.open = 'true';
-        toggle.setAttribute('aria-expanded', 'true');
-      }
-
-      links.dataset.open = window.innerWidth <= 800 ? 'false' : 'true';
-      syncByViewport();
-
-      toggle.addEventListener('click', () => {
-        const open = links.dataset.open === 'true';
-        links.dataset.open = open ? 'false' : 'true';
-        toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
-      });
-
-      window.addEventListener('resize', syncByViewport);
-    })();
-  </script>
 
   <script src="/static/js/add-transaction.js?v=13"></script>
 </body>
