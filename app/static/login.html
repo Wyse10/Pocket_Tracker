@@ -181,6 +181,28 @@
       color: var(--muted);
       font-size: 0.82rem;
     }
+    .tabs button,
+    .submit {
+      border: 0;
+      background: var(--primary);
+      color: #ffffff;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 10px;
+      font: inherit;
+      text-decoration: none;
+    }
+
+    .tabs button.active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .tabs button:hover,
+    .submit:hover {
+      background: var(--primary-strong);
+    }
   </style>
 </head>
 <body>
