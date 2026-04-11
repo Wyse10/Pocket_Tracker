@@ -32,6 +32,15 @@ function showMessage(text, isError = false) {
   message.className = `mt-4 text-sm ${isError ? 'text-red-600' : 'text-emerald-600'}`;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-GH', {
     style: 'currency',
@@ -84,7 +93,10 @@ function setCategoryOptions(selectElement, categories, selectedValue, includeAll
     options.push('<option value="all">All Categories</option>');
   }
 
-  options.push(...categories.map((category) => `<option value="${category}">${category}</option>`));
+  options.push(...categories.map((category) => {
+    const safeCategory = escapeHtml(category);
+    return `<option value="${safeCategory}">${safeCategory}</option>`;
+  }));
   selectElement.innerHTML = options.join('');
 
   if (selectedValue && (selectedValue === 'all' || categories.includes(selectedValue))) {
@@ -156,22 +168,27 @@ function renderTransactions(items) {
       const typeClass = item.type === 'income' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700';
       const amountClass = item.type === 'income' ? 'text-emerald-700' : 'text-rose-700';
       const sign = item.type === 'income' ? '+' : '-';
+      const safeDate = escapeHtml(formatDate(item.date));
+      const safeType = escapeHtml(item.type);
+      const safeCategory = escapeHtml(item.category);
+      const safeDescription = escapeHtml(item.description || '-');
+      const safeId = Number(item.id);
 
       return `
         <tr class="hover:bg-slate-50/80">
-          <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">${formatDate(item.date)}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">${safeDate}</td>
           <td class="px-4 py-3 text-sm">
-            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${typeClass}">${item.type}</span>
+            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${typeClass}">${safeType}</span>
           </td>
-          <td class="px-4 py-3 text-sm text-slate-700">${item.category}</td>
-          <td class="px-4 py-3 text-sm text-slate-600">${item.description || '-'}</td>
+          <td class="px-4 py-3 text-sm text-slate-700">${safeCategory}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${safeDescription}</td>
           <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold ${amountClass}">${sign}${formatCurrency(item.amount)}</td>
           <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
             <button
               type="button"
               class="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-              data-delete-transaction="${item.id}"
-              aria-label="Delete transaction ${item.id}"
+              data-delete-transaction="${safeId}"
+              aria-label="Delete transaction ${safeId}"
             >
               Delete
             </button>

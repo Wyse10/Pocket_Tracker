@@ -1,6 +1,7 @@
+import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -15,6 +16,7 @@ from .auth import (
     get_current_user,
     get_current_user_optional,
     hash_session_token,
+    login_rate_limiter,
     normalize_email,
     session_expires_at,
     verify_password,
@@ -28,6 +30,32 @@ router = APIRouter()
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
+
+
+def _should_use_secure_cookie(request: Request) -> bool:
+    value = os.getenv("SESSION_COOKIE_SECURE", "auto").strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",", 1)[0].strip().lower()
+    if forwarded_proto:
+        return forwarded_proto == "https"
+
+    return request.url.scheme == "https"
+
+
+def _set_session_cookie(response: JSONResponse, request: Request, raw_token: str) -> None:
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=raw_token,
+        httponly=True,
+        samesite="lax",
+        secure=_should_use_secure_cookie(request),
+        max_age=SESSION_DURATION_HOURS * 3600,
+        path="/",
+    )
 
 
 @router.get("/")
@@ -74,7 +102,7 @@ def ai_insights_page(current_user: User | None = Depends(get_current_user_option
 
 
 @router.post("/auth/signup", response_model=schemas.AuthResponse)
-def signup(payload: schemas.UserAuthRequest, db: Session = Depends(get_db)):
+def signup(payload: schemas.UserAuthRequest, request: Request, db: Session = Depends(get_db)):
     email = normalize_email(payload.email)
     existing = db.query(User).filter(User.email == email).first()
     if existing:
@@ -104,23 +132,29 @@ def signup(payload: schemas.UserAuthRequest, db: Session = Depends(get_db)):
             "user": {"id": new_user.id, "full_name": new_user.full_name, "email": new_user.email},
         }
     )
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=raw_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        max_age=SESSION_DURATION_HOURS * 3600,
-    )
+    _set_session_cookie(response, request, raw_token)
     return response
 
 
 @router.post("/auth/login", response_model=schemas.AuthResponse)
-def login(payload: schemas.UserLoginRequest, db: Session = Depends(get_db)):
+def login(payload: schemas.UserLoginRequest, request: Request, db: Session = Depends(get_db)):
     email = normalize_email(payload.email)
+    client_ip = request.client.host if request.client else "unknown"
+
+    can_attempt, retry_after = login_rate_limiter.can_attempt(email, client_ip)
+    if not can_attempt:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many failed login attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     user = db.query(User).filter(User.email == email).first()
     if user is None or not verify_password(payload.password, user.password_hash):
+        login_rate_limiter.register_failure(email, client_ip)
         raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    login_rate_limiter.register_success(email, client_ip)
 
     # Keep one active session per user for predictable behavior.
     db.query(UserSession).filter(UserSession.user_id == user.id).delete()
@@ -139,14 +173,7 @@ def login(payload: schemas.UserLoginRequest, db: Session = Depends(get_db)):
             "user": {"id": user.id, "full_name": user.full_name, "email": user.email},
         }
     )
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=raw_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        max_age=SESSION_DURATION_HOURS * 3600,
-    )
+    _set_session_cookie(response, request, raw_token)
     return response
 
 

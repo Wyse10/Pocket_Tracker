@@ -81,6 +81,11 @@ async def log_requests(request: Request, call_next):
     try:
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+        response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self' https://cdn.plot.ly; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
         app_logger.info(
             "request.completed",
             extra={

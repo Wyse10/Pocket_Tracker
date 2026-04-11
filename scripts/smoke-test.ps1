@@ -95,9 +95,46 @@ try {
     $me = Invoke-RestMethod -Uri "$baseUrl/auth/me" -Method Get -WebSession $session2
     Assert-True -Condition ($me.email -eq $email) -Message "Auth me failed: wrong user returned."
 
+    $securityEmail = "security_$(Get-Date -Format 'yyyyMMddHHmmss')@example.com"
+    $securityPassword = "StrongPass123"
+    $securitySignupBody = @{
+        full_name = "Security User"
+        email = $securityEmail
+        password = $securityPassword
+    } | ConvertTo-Json
+
+    $securitySignup = Invoke-RestMethod -Uri "$baseUrl/auth/signup" -Method Post -ContentType "application/json" -Body $securitySignupBody
+    Assert-True -Condition ($securitySignup.user.email -eq $securityEmail) -Message "Security signup failed: unexpected user email."
+
+    $failedStatuses = @()
+    $retryAfterValue = $null
+    for ($attempt = 1; $attempt -le 6; $attempt++) {
+        $badLoginBody = @{ email = $securityEmail; password = "WrongPass999" } | ConvertTo-Json
+        try {
+            $null = Invoke-RestMethod -Uri "$baseUrl/auth/login" -Method Post -ContentType "application/json" -Body $badLoginBody
+            $failedStatuses += 200
+        } catch {
+            if ($null -ne $_.Exception.Response) {
+                $response = $_.Exception.Response
+                $failedStatuses += [int]$response.StatusCode
+                if ($null -eq $retryAfterValue -and [int]$response.StatusCode -eq 429) {
+                    $retryAfterValue = $response.Headers["Retry-After"]
+                }
+            } else {
+                throw
+            }
+        }
+    }
+
+    Assert-True -Condition ($failedStatuses.Count -eq 6) -Message "Security test failed: expected 6 login attempt results."
+    Assert-True -Condition (($failedStatuses[0..4] -join ',') -eq '401,401,401,401,401') -Message "Security test failed: expected first five login attempts to return 401."
+    Assert-True -Condition ($failedStatuses[5] -eq 429) -Message "Security test failed: expected sixth login attempt to return 429 lockout."
+    Assert-True -Condition (-not [string]::IsNullOrWhiteSpace([string]$retryAfterValue)) -Message "Security test failed: missing Retry-After header on 429 response."
+
     Write-Host "Smoke test passed."
     Write-Host "  User: $email"
     Write-Host "  Transaction ID: $($tx.id)"
+    Write-Host "  Lockout status sequence: $($failedStatuses -join ',')"
     exit 0
 }
 catch {

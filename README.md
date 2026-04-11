@@ -140,6 +140,12 @@ Current implemented features:
   - `LLM_MODEL` (default: `llama-3.1-8b-instant`)
   - `LLM_PROVIDER_NAME` (default: `groq-llama`)
 
+  Optional auth security tuning:
+  - `SESSION_COOKIE_SECURE` (`auto`, `true`, or `false`; default: `auto`)
+  - `AUTH_MAX_FAILED_ATTEMPTS` (default: `5`)
+  - `AUTH_FAILURE_WINDOW_MINUTES` (default: `15`)
+  - `AUTH_LOCKOUT_MINUTES` (default: `15`)
+
   Example for xAI Grok compatibility:
   ```powershell
   $env:LLM_API_KEY="your_xai_api_key"
