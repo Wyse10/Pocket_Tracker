@@ -13,11 +13,6 @@ const nextPageButton = document.getElementById('next-page');
 const incomeTotalMetric = document.getElementById('metric-income-total');
 const expenseTotalMetric = document.getElementById('metric-expense-total');
 const totalBalanceMetric = document.getElementById('metric-total-balance');
-const aiFocusInput = document.getElementById('ai-focus');
-const generateAiInsightButton = document.getElementById('generate-ai-insight');
-const aiStatus = document.getElementById('ai-status');
-const aiMeta = document.getElementById('ai-meta');
-const aiInsight = document.getElementById('ai-insight');
 
 const state = {
   page: 1,
@@ -27,31 +22,6 @@ const state = {
   totalPages: 0,
   total: 0,
 };
-
-const CATEGORY_OPTIONS_BY_TYPE = {
-  income: [
-    'Salary',
-    'Freelance',
-    'Business',
-    'Investment Returns',
-    'Gift Received',
-    'Others',
-  ],
-  expense: [
-    'Food & Drink',
-    'Transport',
-    'Entertainment',
-    'Shopping',
-    'Health',
-    'Utility',
-    'Housing',
-    'Others',
-  ],
-};
-
-const ALL_CATEGORY_OPTIONS = Array.from(
-  new Set([...CATEGORY_OPTIONS_BY_TYPE.income, ...CATEGORY_OPTIONS_BY_TYPE.expense])
-);
 
 if (dateInput) {
   dateInput.value = new Date().toISOString().split('T')[0];
@@ -80,80 +50,13 @@ function formatDate(value) {
   }).format(date);
 }
 
-function setAiState({ status = '', insight = '', meta = '', isError = false, isLoading = false }) {
-  if (aiStatus) {
-    aiStatus.textContent = status;
-    aiStatus.style.color = isError ? '#be123c' : '#475569';
-  }
-
-  if (aiInsight && typeof insight === 'string' && insight.length) {
-    aiInsight.textContent = insight;
-  }
-
-  if (aiMeta) {
-    aiMeta.textContent = meta;
-  }
-
-  if (generateAiInsightButton) {
-    generateAiInsightButton.disabled = isLoading;
-    generateAiInsightButton.textContent = isLoading ? 'Generating...' : 'Generate AI Insight';
-  }
-}
-
-async function generateAiInsight() {
-  if (!generateAiInsightButton || !aiInsight) {
-    return;
-  }
-
-  setAiState({
-    status: 'Requesting AI insight...',
-    isError: false,
-    isLoading: true,
-  });
-
-  const focus = String(aiFocusInput?.value || '').trim();
-  const shouldUsePost = focus.length >= 2;
-
-  try {
-    const response = await fetch('/ai-suggestions', {
-      method: shouldUsePost ? 'POST' : 'GET',
-      headers: shouldUsePost ? { 'Content-Type': 'application/json' } : undefined,
-      body: shouldUsePost ? JSON.stringify({ focus }) : undefined,
-    });
-
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(payload?.detail || 'Failed to generate AI insight.');
-    }
-
-    setAiState({
-      status: 'Insight updated.',
-      insight: payload?.insight || 'No AI response was generated.',
-      meta: `Provider: ${payload?.provider || '-'} | Model: ${payload?.model || '-'}`,
-      isError: false,
-      isLoading: false,
-    });
-  } catch (err) {
-    setAiState({
-      status: err?.message || 'Failed to generate AI insight.',
-      isError: true,
-      isLoading: false,
-    });
-  }
-}
-
 async function loadDashboardSummary() {
   if (!incomeTotalMetric || !expenseTotalMetric || !totalBalanceMetric) {
     return;
   }
 
   try {
-    const response = await fetch('/dashboard-summary');
-    if (!response.ok) {
-      throw new Error('Failed to load summary.');
-    }
-
-    const summary = await response.json();
+    const summary = await window.apiClient.getJson('/dashboard-summary', 'Failed to load summary.');
     incomeTotalMetric.textContent = formatCurrency(Number(summary.income_total ?? 0));
     expenseTotalMetric.textContent = formatCurrency(Number(summary.expense_total ?? 0));
     totalBalanceMetric.textContent = formatCurrency(Number(summary.total_balance ?? 0));
@@ -164,12 +67,13 @@ async function loadDashboardSummary() {
   }
 }
 
-function resolveCategories(transactionType) {
-  if (transactionType === 'income' || transactionType === 'expense') {
-    return CATEGORY_OPTIONS_BY_TYPE[transactionType];
-  }
-
-  return ALL_CATEGORY_OPTIONS;
+async function fetchCategories(transactionType = null) {
+  const data = await window.apiClient.postJson(
+    '/categories',
+    { transaction_type: transactionType },
+    'Failed to load categories.'
+  );
+  return Array.isArray(data?.categories) ? data.categories : [];
 }
 
 function setCategoryOptions(selectElement, categories, selectedValue, includeAllOption = false) {
@@ -191,24 +95,10 @@ function setCategoryOptions(selectElement, categories, selectedValue, includeAll
 async function loadCategories(transactionType) {
   if (!categorySelect) return;
 
-  const fallbackCategories = resolveCategories(transactionType);
   const previouslySelected = categorySelect.value;
 
   try {
-    const response = await fetch('/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transaction_type: transactionType || null }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to load categories.');
-    }
-
-    const data = await response.json();
-    const categories = Array.isArray(data.categories) && data.categories.length
-      ? data.categories
-      : fallbackCategories;
+    const categories = await fetchCategories(transactionType || null);
 
     setCategoryOptions(categorySelect, categories, previouslySelected);
 
@@ -216,10 +106,18 @@ async function loadCategories(transactionType) {
       categorySelect.value = categories[0] || '';
     }
   } catch (err) {
-    setCategoryOptions(categorySelect, fallbackCategories, previouslySelected);
-    if (!fallbackCategories.includes(categorySelect.value)) {
-      categorySelect.value = fallbackCategories[0] || '';
-    }
+    setCategoryOptions(categorySelect, [], previouslySelected);
+  }
+}
+
+async function loadFilterCategories(selectedType, selectedCategory = 'all') {
+  const transactionType = selectedType === 'all' ? null : selectedType;
+
+  try {
+    const categories = await fetchCategories(transactionType);
+    setCategoryOptions(filterCategorySelect, categories, selectedCategory, true);
+  } catch (err) {
+    setCategoryOptions(filterCategorySelect, [], 'all', true);
   }
 }
 
@@ -306,13 +204,10 @@ async function loadTransactions() {
   }
 
   try {
-    const response = await fetch(`/transactions?${params.toString()}`);
-
-    if (!response.ok) {
-      throw new Error('Failed to load transactions.');
-    }
-
-    const data = await response.json();
+    const data = await window.apiClient.getJson(
+      `/transactions?${params.toString()}`,
+      'Failed to load transactions.'
+    );
     const items = Array.isArray(data)
       ? data
       : Array.isArray(data.items)
@@ -383,19 +278,7 @@ form?.addEventListener('submit', async (event) => {
   };
 
   try {
-    const response = await fetch('/add-transaction', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      showMessage(error.detail ? JSON.stringify(error.detail) : 'Failed to save transaction.', true);
-      return;
-    }
-
-    const saved = await response.json();
+    const saved = await window.apiClient.postJson('/add-transaction', payload, 'Failed to save transaction.');
     showMessage(`Transaction saved. ID: ${saved.id}`);
     form.reset();
     dateInput.value = new Date().toISOString().split('T')[0];
@@ -411,10 +294,9 @@ typeSelect?.addEventListener('change', () => {
   loadCategories(typeSelect.value);
 });
 
-filterTypeSelect?.addEventListener('change', () => {
+filterTypeSelect?.addEventListener('change', async () => {
   const selectedType = filterTypeSelect.value;
-  const categories = resolveCategories(selectedType === 'all' ? null : selectedType);
-  setCategoryOptions(filterCategorySelect, categories, 'all', true);
+  await loadFilterCategories(selectedType, 'all');
   syncFilterState({ type: selectedType, category: 'all' });
 });
 
@@ -449,14 +331,7 @@ tableBody?.addEventListener('click', async (event) => {
   button.textContent = 'Deleting...';
 
   try {
-    const response = await fetch(`/transactions/${transactionId}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => null);
-      throw new Error(error?.detail || 'Failed to delete transaction.');
-    }
+    await window.apiClient.deleteJson(`/transactions/${transactionId}`, 'Failed to delete transaction.');
 
     showMessage('Transaction deleted.');
     await loadDashboardSummary();
@@ -468,11 +343,13 @@ tableBody?.addEventListener('click', async (event) => {
   }
 });
 
-generateAiInsightButton?.addEventListener('click', () => {
-  generateAiInsight();
-});
+async function initPage() {
+  await Promise.all([
+    loadCategories(typeSelect?.value || 'expense'),
+    loadFilterCategories(filterTypeSelect?.value || 'all', 'all'),
+    loadDashboardSummary(),
+    loadTransactions(),
+  ]);
+}
 
-setCategoryOptions(filterCategorySelect, ALL_CATEGORY_OPTIONS, 'all', true);
-loadCategories(typeSelect?.value || 'expense');
-loadDashboardSummary();
-loadTransactions();
+initPage();
