@@ -1,7 +1,31 @@
 import os
+from pathlib import Path
 
 import httpx
+from dotenv import dotenv_values, load_dotenv
 from fastapi import HTTPException
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+
+load_dotenv(dotenv_path=ENV_FILE)
+
+
+def _get_setting(name: str, default: str | None = None) -> str | None:
+    # Prefer process env first.
+    value = os.getenv(name)
+    if value and str(value).strip():
+        return str(value).strip()
+
+    # Fallback to reading .env directly for robustness across terminal sessions.
+    if ENV_FILE.exists():
+        values = dotenv_values(ENV_FILE)
+        raw = values.get(name)
+        if raw and str(raw).strip():
+            return str(raw).strip()
+
+    return default
 
 
 def _serialize_aggregation(agg_data: dict) -> str:
@@ -39,10 +63,12 @@ def _serialize_aggregation(agg_data: dict) -> str:
 
 
 def _llm_settings() -> tuple[str, str, str, str]:
-    api_key = os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY")
-    base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
-    model = os.getenv("LLM_MODEL", "llama-3.1-8b-instant")
-    provider = os.getenv("LLM_PROVIDER_NAME", "groq-llama")
+    # Refresh env values at request-time so updated .env keys are picked up immediately.
+    load_dotenv(dotenv_path=ENV_FILE, override=False)
+    api_key = _get_setting("GROQ_API_KEY") or _get_setting("LLM_API_KEY")
+    base_url = _get_setting("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+    model = _get_setting("LLM_MODEL", "llama-3.1-8b-instant")
+    provider = _get_setting("LLM_PROVIDER_NAME", "groq-llama")
     return api_key, base_url, model, provider
 
 
@@ -90,20 +116,11 @@ def generate_ai_insight(aggregated_data: dict, focus: str | None = None) -> dict
         )
 
     system_prompt = (
-        "You are a strict and intelligent financial advisor."
-        "Your task is to analyze a user's financial behavior and provide structured advice"
-        "Instructions:"
-        " - Be concise and practical"
-        " - Use bullet points"
-        " - Use numbers and percentages"
-        " - Highlight risks clearly"
-        " - Give actionable advice"
-        
-        "Output Format:"
-        "1. Key Insights"
-        "2. Risks"
-        "3. Recommendations"
-        "4. Financial Score (0-100)"
+        "You are a strict and intelligent financial advisor. "
+        "Analyze the user's financial behavior and provide structured advice. "
+        "Be concise and practical, use bullet points, use numbers and percentages, "
+        "highlight risks clearly, and give actionable recommendations. "
+        "Output format: 1) Key Insights 2) Risks 3) Recommendations 4) Financial Score (0-100)."
     )
 
 

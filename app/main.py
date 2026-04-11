@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
@@ -60,13 +60,21 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/")
-def root() -> FileResponse:
-    return FileResponse(str(STATIC_DIR / "add-transaction.html"))
+def root() -> HTMLResponse:
+    html_path = STATIC_DIR / "add-transaction.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/add-transaction")
-def add_transaction_page() -> FileResponse:
-    return FileResponse(str(STATIC_DIR / "add-transaction.html"))
+def add_transaction_page() -> HTMLResponse:
+    html_path = STATIC_DIR / "add-transaction.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+@app.get("/ai-insights")
+def ai_insights_page() -> HTMLResponse:
+    html_path = STATIC_DIR / "ai-insights.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.post("/add-transaction", response_model=schemas.TransactionRead)

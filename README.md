@@ -3,7 +3,7 @@
 SmartSpend AI is a lightweight personal finance web app for quickly recording income and expense transactions in one place.
 
 It combines:
-- A clean transaction entry page (HTML + Tailwind CSS + vanilla JavaScript)
+- A clean transaction entry page (HTML + vanilla JavaScript)
 - A FastAPI backend for request handling and validation
 - SQLite storage through SQLAlchemy ORM
 
@@ -20,7 +20,7 @@ Current implemented features:
 
 ## Tech Stack
 
-- Frontend: HTML5, Tailwind CSS (CDN), vanilla JavaScript
+- Frontend: HTML5, vanilla JavaScript
 - Backend: Python, FastAPI
 - Database: SQLite + SQLAlchemy
 - Data validation: Pydantic
@@ -37,6 +37,7 @@ Current implemented features:
 │  ├─ crud.py                # Create/list transaction logic
 │  └─ static/
 │     ├─ add-transaction.html
+│     ├─ ai-insights.html
 │     ├─ css/
 │     │  └─ styles.css
 │     └─ js/
@@ -53,6 +54,9 @@ Current implemented features:
 
 - `GET /add-transaction`  
   Serves the add transaction page directly.
+
+- `GET /ai-insights`
+  Serves the dedicated AI insights page.
 
 - `POST /add-transaction`  
   Creates a new transaction.
@@ -96,9 +100,18 @@ Current implemented features:
 
 3. Install dependencies
    ```bash
+  pip install -r requirements.txt
    ```
 
 4. Configure AI provider (LLaMA on Groq)
+
+  Create a `.env` file in project root:
+  ```env
+  GROQ_API_KEY=your_groq_api_key
+  LLM_MODEL=llama-3.1-8b-instant
+  ```
+
+  The app auto-loads `.env` on startup.
 
   Windows (PowerShell):
   ```powershell
@@ -121,8 +134,8 @@ Current implemented features:
   ```
 
 5. Run the app
-   ```bash
-   uvicorn app.main:app --reload
+  ```powershell
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
    ```
 
 6. Open in your browser
@@ -142,6 +155,26 @@ Current implemented features:
 
 - SQLite database file is created locally as `smartspend.db` when the app starts.
 - This is a single-user local MVP focused on quick transaction tracking.
+
+## Troubleshooting
+
+If the browser page appears blank:
+
+1. Ensure only one server is running on port 8000.
+  ```powershell
+  Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -eq 8000 }
+  ```
+
+2. Stop duplicate uvicorn/python processes and restart once.
+  ```powershell
+  Get-Process -Name uvicorn -ErrorAction SilentlyContinue | Stop-Process -Force
+  Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -eq 8000 } | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+  ```
+
+3. Open the page route directly and hard refresh.
+  - `http://127.0.0.1:8000/add-transaction`
+  - Press `Ctrl+F5`
 
 ## Roadmap (From PRD)
 

@@ -12,6 +12,11 @@ env/
 # Local database
 *.db
 
+# Local environment secrets
+.env
+.env.*
+!.env.example
+
 # OS/editor
 .DS_Store
 Thumbs.db
