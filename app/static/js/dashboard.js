@@ -11,8 +11,12 @@ const trendGranularitySelect = document.getElementById('trend-granularity');
 
 const REFRESH_INTERVAL_MS = 10000;
 const RECENT_WINDOW_DAYS = 100;
+const PLOTLY_WAIT_TIMEOUT_MS = 8000;
+const PLOTLY_WAIT_INTERVAL_MS = 120;
 let refreshTimer = null;
 let rawSpendingOverTime = [];
+let latestDashboardPayload = null;
+let plotlyWaitPromise = null;
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-GH', {
@@ -59,14 +63,6 @@ function renderMetrics(summary) {
 }
 
 function renderCategoryChart(categoryBreakdown) {
-  if (!window.Plotly) {
-    if (categoryEmptyNote) {
-      categoryEmptyNote.style.display = 'block';
-      categoryEmptyNote.textContent = 'Chart library could not load. Metrics are still available.';
-    }
-    return;
-  }
-
   const labels = Object.keys(categoryBreakdown || {});
   const values = labels.map((label) => Number(categoryBreakdown[label] || 0));
 
@@ -185,14 +181,6 @@ function trendEmptyStateMessage(granularity) {
 }
 
 function renderTrendChart(spendingOverTime) {
-  if (!window.Plotly) {
-    if (trendEmptyNote) {
-      trendEmptyNote.style.display = 'block';
-      trendEmptyNote.textContent = 'Chart library could not load. Metrics are still available.';
-    }
-    return;
-  }
-
   const granularity = trendGranularitySelect?.value || 'monthly';
   const points = aggregateTrendPoints(spendingOverTime, granularity);
   const x = points.map((point) => point.date);
@@ -246,6 +234,60 @@ function renderTrendChart(spendingOverTime) {
   });
 }
 
+function waitForPlotly() {
+  if (window.Plotly) {
+    return Promise.resolve(true);
+  }
+
+  if (plotlyWaitPromise) {
+    return plotlyWaitPromise;
+  }
+
+  plotlyWaitPromise = new Promise((resolve) => {
+    const startedAt = Date.now();
+
+    const check = () => {
+      if (window.Plotly) {
+        resolve(true);
+        return;
+      }
+
+      if (Date.now() - startedAt >= PLOTLY_WAIT_TIMEOUT_MS) {
+        resolve(false);
+        return;
+      }
+
+      window.setTimeout(check, PLOTLY_WAIT_INTERVAL_MS);
+    };
+
+    check();
+  });
+
+  return plotlyWaitPromise;
+}
+
+async function renderChartsFromLatestPayload() {
+  if (!latestDashboardPayload) {
+    return;
+  }
+
+  const plotlyReady = await waitForPlotly();
+  if (!plotlyReady) {
+    if (categoryEmptyNote) {
+      categoryEmptyNote.style.display = 'block';
+      categoryEmptyNote.textContent = 'Charts are taking longer to load. Please refresh in a moment.';
+    }
+    if (trendEmptyNote) {
+      trendEmptyNote.style.display = 'block';
+      trendEmptyNote.textContent = 'Charts are taking longer to load. Please refresh in a moment.';
+    }
+    return;
+  }
+
+  renderCategoryChart(latestDashboardPayload.category_breakdown || {});
+  renderTrendChart(rawSpendingOverTime);
+}
+
 async function fetchAndRenderDashboard() {
   try {
     setLoadingStatus('Syncing live dashboard...');
@@ -258,9 +300,9 @@ async function fetchAndRenderDashboard() {
     }
 
     renderMetrics(payload);
-    renderCategoryChart(payload.category_breakdown || {});
+    latestDashboardPayload = payload;
     rawSpendingOverTime = Array.isArray(payload.spending_over_time) ? payload.spending_over_time : [];
-    renderTrendChart(rawSpendingOverTime);
+    renderChartsFromLatestPayload();
 
     const timestamp = new Date();
     if (lastSyncLabel) {
@@ -293,7 +335,9 @@ manualRefreshButton?.addEventListener('click', () => {
 });
 
 trendGranularitySelect?.addEventListener('change', () => {
-  renderTrendChart(rawSpendingOverTime);
+  if (window.Plotly) {
+    renderTrendChart(rawSpendingOverTime);
+  }
 });
 
 window.addEventListener('beforeunload', () => {
