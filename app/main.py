@@ -52,11 +52,14 @@ app = FastAPI(title="Pocket Tracker")
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
-        headers=exc.headers,
     )
+    if exc.headers:
+        for key, value in exc.headers.items():
+            response.headers[key] = value
+    return response
 
 
 def ensure_schema_updates() -> None:
