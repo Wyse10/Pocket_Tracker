@@ -184,16 +184,6 @@ The script validates:
 - logout protection (401 expected)
 - login and `/auth/me`
 
-### Automated CI smoke test
-
-GitHub Actions now runs the same smoke test automatically on:
-- pushes to `main`
-- all pull requests
-- both `windows-latest` and `ubuntu-latest` runners
-
-Workflow file:
-- `.github/workflows/smoke-test.yml`
-
 ## Free Deployment (Render + Neon)
 
 This app can run for free with:
