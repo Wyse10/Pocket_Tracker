@@ -12,7 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            python_exe: python
+          - os: ubuntu-latest
+            python_exe: python3
 
     steps:
       - name: Checkout
@@ -28,5 +32,5 @@ jobs:
         shell: pwsh
 
       - name: Run smoke test
-        run: .\scripts\smoke-test.ps1 -Port 8010 -BindHost 127.0.0.1 -PythonExe python
+        run: .\scripts\smoke-test.ps1 -Port 8010 -BindHost 127.0.0.1 -PythonExe ${{ matrix.python_exe }}
         shell: pwsh
