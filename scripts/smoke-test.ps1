@@ -21,13 +21,20 @@ $baseUrl = "http://$BindHost`:$Port"
 $serverProcess = $null
 
 try {
-    if (-not (Test-Path $PythonExe)) {
-        throw "Python executable not found at $PythonExe"
+    $resolvedPythonExe = $null
+    if (Test-Path $PythonExe) {
+        $resolvedPythonExe = (Resolve-Path $PythonExe).Path
+    } else {
+        $pythonCommand = Get-Command $PythonExe -ErrorAction SilentlyContinue
+        if ($null -eq $pythonCommand -or [string]::IsNullOrWhiteSpace($pythonCommand.Source)) {
+            throw "Python executable not found at '$PythonExe'."
+        }
+        $resolvedPythonExe = $pythonCommand.Source
     }
 
     Write-Host "Starting test server on $baseUrl ..."
     $startArgs = @{
-        FilePath = $PythonExe
+        FilePath = $resolvedPythonExe
         ArgumentList = @("-m", "uvicorn", "app.main:app", "--host", $BindHost, "--port", "$Port")
         PassThru = $true
     }
