@@ -18,6 +18,24 @@ let rawSpendingOverTime = [];
 let latestDashboardPayload = null;
 let plotlyWaitPromise = null;
 
+const PLOTLY_COMMON_CONFIG = {
+  responsive: true,
+  displayModeBar: true,
+  modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d', 'toggleSpikelines'],
+  toImageButtonOptions: {
+    format: 'png',
+    filename: 'pocket-tracker-chart',
+    scale: 2,
+  },
+};
+
+const PLOTLY_ANIMATED_LAYOUT = {
+  transition: {
+    duration: 450,
+    easing: 'cubic-in-out',
+  },
+};
+
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-GH', {
     style: 'currency',
@@ -85,22 +103,20 @@ function renderCategoryChart(categoryBreakdown) {
       labels,
       values,
       textinfo: 'label+percent',
-      hovertemplate: 'GH₵%{value:,.2f}<extra></extra>',
+      hovertemplate: '<b>%{label}</b><br>Amount: GH₵%{value:,.2f}<br>Share: %{percent}<extra></extra>',
       marker: {
         colors: ['#16a34a', '#2563eb', '#0f766e', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#0ea5e9'],
       },
     },
   ], {
+    ...PLOTLY_ANIMATED_LAYOUT,
     margin: { t: 10, r: 10, b: 10, l: 10 },
     showlegend: true,
     legend: {
       orientation: 'h',
       y: -0.1,
     },
-  }, {
-    responsive: true,
-    displayModeBar: false,
-  });
+  }, PLOTLY_COMMON_CONFIG);
 }
 
 function toDateOnly(dateString) {
@@ -208,15 +224,19 @@ function renderTrendChart(spendingOverTime) {
       line: {
         color: '#2563eb',
         width: 3,
+        shape: 'spline',
+        smoothing: 0.8,
       },
       marker: {
         color: '#1d4ed8',
         size: 7,
       },
-      hovertemplate: '%{x}<br>GH₵%{y:,.2f}<extra></extra>',
+      hovertemplate: '<b>%{x}</b><br>Spending: GH₵%{y:,.2f}<extra></extra>',
     },
   ], {
+    ...PLOTLY_ANIMATED_LAYOUT,
     margin: { t: 14, r: 12, b: 42, l: 54 },
+    hovermode: 'x unified',
     xaxis: {
       title: trendAxisTitle(granularity),
       tickangle: -35,
@@ -228,10 +248,7 @@ function renderTrendChart(spendingOverTime) {
     showlegend: false,
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
-  }, {
-    responsive: true,
-    displayModeBar: false,
-  });
+  }, PLOTLY_COMMON_CONFIG);
 }
 
 function waitForPlotly() {
