@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: pocket-tracker
+    env: python
+    plan: free
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: llama-3.1-8b-instant
+      - key: LLM_PROVIDER_NAME
+        value: groq-llama
+      - key: SESSION_COOKIE_SECURE
+        value: auto

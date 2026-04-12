@@ -26,7 +26,18 @@ try {
     }
 
     Write-Host "Starting test server on $baseUrl ..."
-    $serverProcess = Start-Process -FilePath $PythonExe -ArgumentList "-m", "uvicorn", "app.main:app", "--host", $BindHost, "--port", "$Port" -PassThru -WindowStyle Hidden
+    $startArgs = @{
+        FilePath = $PythonExe
+        ArgumentList = @("-m", "uvicorn", "app.main:app", "--host", $BindHost, "--port", "$Port")
+        PassThru = $true
+    }
+
+    # WindowStyle is only available on Windows PowerShell hosts.
+    if ($IsWindows) {
+        $startArgs.WindowStyle = "Hidden"
+    }
+
+    $serverProcess = Start-Process @startArgs
 
     $ready = $false
     for ($i = 0; $i -lt 40; $i++) {

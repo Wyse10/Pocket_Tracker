@@ -184,6 +184,111 @@ The script validates:
 - logout protection (401 expected)
 - login and `/auth/me`
 
+### Automated CI smoke test
+
+GitHub Actions now runs the same smoke test automatically on:
+- pushes to `main`
+- all pull requests
+- both `windows-latest` and `ubuntu-latest` runners
+
+Workflow file:
+- `.github/workflows/smoke-test.yml`
+
+## Free Deployment (Render + Neon)
+
+This app can run for free with:
+- Render Free Web Service (FastAPI hosting)
+- Neon Free PostgreSQL (persistent database)
+
+Why this setup:
+- Render free instances sleep when idle, but wake on request.
+- SQLite files are not reliable for persistence on free cloud hosts.
+- Neon gives you a persistent hosted Postgres URL that works with free hosting.
+
+### 1. Push this repo to GitHub
+
+Make sure your latest code is in a GitHub repository.
+
+### 2. Create a free Neon database
+
+1. Sign in to Neon and create a new project.
+2. Copy the connection string (looks like `postgresql://...`).
+3. Save it for Render as `DATABASE_URL`.
+
+### 3. Deploy on Render (Blueprint)
+
+1. Sign in to Render.
+2. Choose **New +** -> **Blueprint**.
+3. Connect your GitHub repo.
+4. Render detects `render.yaml` automatically.
+5. Set required environment variables during setup:
+  - `DATABASE_URL` = your Neon connection string
+  - `GROQ_API_KEY` = your Groq API key
+  - `LLM_MODEL` = `llama-3.1-8b-instant` (or your preferred model)
+  - `LLM_PROVIDER_NAME` = `groq-llama`
+  - `SESSION_COOKIE_SECURE` = `auto`
+6. Click **Apply** to deploy.
+
+Render start command is already configured as:
+
+```text
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+### 4. Verify deployment
+
+After build completes, open:
+- `https://<your-render-service>.onrender.com/login`
+- `https://<your-render-service>.onrender.com/docs`
+
+If login page loads and signup works, deployment is complete.
+
+### 5. Optional hardening for production
+
+- Set `SESSION_COOKIE_SECURE=true` after confirming HTTPS works end-to-end.
+- Rotate API keys if accidentally exposed.
+- Add a custom domain later if needed.
+
+## Alternative Free Deployment (Koyeb + Neon)
+
+If you prefer not to use Render, you can run the same app for free on Koyeb.
+
+This repository now includes:
+- `Dockerfile`
+- `.dockerignore`
+
+### 1. Create a free Neon database
+
+1. Create a Neon project.
+2. Copy the Postgres connection string.
+3. Keep it ready for `DATABASE_URL` in Koyeb.
+
+### 2. Push repo to GitHub
+
+Koyeb deploys from your GitHub repository.
+
+### 3. Create Koyeb free web service
+
+1. Sign in to Koyeb.
+2. Create **Web Service** from your GitHub repo.
+3. Use Dockerfile-based deploy (auto-detected from repo root).
+4. Add environment variables:
+  - `DATABASE_URL` = your Neon connection string
+  - `GROQ_API_KEY` = your Groq API key
+  - `LLM_MODEL` = `llama-3.1-8b-instant`
+  - `LLM_PROVIDER_NAME` = `groq-llama`
+  - `SESSION_COOKIE_SECURE` = `auto`
+5. Set instance type to free tier.
+6. Deploy.
+
+### 4. Verify
+
+Open:
+- `https://<your-koyeb-service>/login`
+- `https://<your-koyeb-service>/docs`
+
+If signup/login and transaction creation work, deployment is successful.
+
 ## Data Model
 
 `transactions` table fields:
