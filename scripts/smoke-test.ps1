@@ -27,9 +27,20 @@ try {
     } else {
         $pythonCommand = Get-Command $PythonExe -ErrorAction SilentlyContinue
         if ($null -eq $pythonCommand -or [string]::IsNullOrWhiteSpace($pythonCommand.Source)) {
-            throw "Python executable not found at '$PythonExe'."
+            foreach ($fallbackName in @("python3", "py")) {
+                $fallbackCommand = Get-Command $fallbackName -ErrorAction SilentlyContinue
+                if ($null -ne $fallbackCommand -and -not [string]::IsNullOrWhiteSpace($fallbackCommand.Source)) {
+                    $resolvedPythonExe = $fallbackCommand.Source
+                    break
+                }
+            }
+
+            if ([string]::IsNullOrWhiteSpace($resolvedPythonExe)) {
+                throw "Python executable not found at '$PythonExe'. Tried fallbacks: python3, py."
+            }
+        } else {
+            $resolvedPythonExe = $pythonCommand.Source
         }
-        $resolvedPythonExe = $pythonCommand.Source
     }
 
     Write-Host "Starting test server on $baseUrl ..."
