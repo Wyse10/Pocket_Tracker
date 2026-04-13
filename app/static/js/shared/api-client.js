@@ -59,7 +59,10 @@
     }
 
     if (!response.ok) {
-      throw new Error(errorMessageFromPayload(payload, fallbackMessage));
+      const error = new Error(errorMessageFromPayload(payload, fallbackMessage));
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
     }
 
     return payload;
