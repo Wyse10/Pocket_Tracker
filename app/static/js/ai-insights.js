@@ -4,6 +4,78 @@ const aiStatus = document.getElementById('ai-status');
 const aiMeta = document.getElementById('ai-meta');
 const aiInsight = document.getElementById('ai-insight');
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatInlineMarkdown(value) {
+  return escapeHtml(value)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function renderMarkdown(markdown) {
+  const lines = String(markdown || '').split(/\r?\n/);
+  const blocks = [];
+  let paragraphLines = [];
+  let orderedListItems = [];
+
+  const flushParagraph = () => {
+    if (!paragraphLines.length) {
+      return;
+    }
+    blocks.push(`<p>${formatInlineMarkdown(paragraphLines.join(' ').trim())}</p>`);
+    paragraphLines = [];
+  };
+
+  const flushOrderedList = () => {
+    if (!orderedListItems.length) {
+      return;
+    }
+    blocks.push(`<ol>${orderedListItems.map((item) => `<li>${formatInlineMarkdown(item)}</li>`).join('')}</ol>`);
+    orderedListItems = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      flushOrderedList();
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushOrderedList();
+      const headingLevel = headingMatch[1].length;
+      blocks.push(`<h${headingLevel}>${formatInlineMarkdown(headingMatch[2])}</h${headingLevel}>`);
+      continue;
+    }
+
+    const orderedItemMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (orderedItemMatch) {
+      flushParagraph();
+      orderedListItems.push(orderedItemMatch[1]);
+      continue;
+    }
+
+    flushOrderedList();
+    paragraphLines.push(line);
+  }
+
+  flushParagraph();
+  flushOrderedList();
+
+  return blocks.join('');
+}
+
 function setAiState({ status = '', insight = '', meta = '', isError = false, isLoading = false }) {
   if (aiStatus) {
     aiStatus.textContent = status;
@@ -11,7 +83,7 @@ function setAiState({ status = '', insight = '', meta = '', isError = false, isL
   }
 
   if (aiInsight && typeof insight === 'string' && insight.length) {
-    aiInsight.textContent = insight;
+    aiInsight.innerHTML = renderMarkdown(insight);
   }
 
   if (aiMeta) {

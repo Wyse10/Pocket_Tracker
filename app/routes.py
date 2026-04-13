@@ -253,7 +253,7 @@ def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = De
 @router.get("/ai-suggestions", response_model=schemas.AIInsightResponse)
 def get_ai_suggestions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     aggregated_data = crud.get_ai_aggregation_data(db, user_id=current_user.id)
-    return generate_ai_insight(aggregated_data)
+    return generate_ai_insight(aggregated_data, user_name=current_user.full_name)
 
 
 @router.post("/ai-suggestions", response_model=schemas.AIInsightResponse)
@@ -263,4 +263,4 @@ def create_ai_suggestion(
     current_user: User = Depends(get_current_user),
 ):
     aggregated_data = crud.get_ai_aggregation_data(db, user_id=current_user.id)
-    return generate_ai_insight(aggregated_data, focus=payload.focus)
+    return generate_ai_insight(aggregated_data, user_name=current_user.full_name, focus=payload.focus)

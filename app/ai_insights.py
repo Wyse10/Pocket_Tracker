@@ -106,7 +106,7 @@ def _call_chat_completion(
     )
 
 
-def generate_ai_insight(aggregated_data: dict, focus: str | None = None) -> dict:
+def generate_ai_insight(aggregated_data: dict, user_name: str, focus: str | None = None) -> dict:
     api_key, base_url, model, provider = _llm_settings()
 
     if not api_key:
@@ -117,18 +117,21 @@ def generate_ai_insight(aggregated_data: dict, focus: str | None = None) -> dict
 
     system_prompt = (
         "You are a strict and intelligent financial advisor. "
-        "Analyze the user's financial behavior and provide structured advice. "
-        "Be concise and practical, use bullet points, use numbers and percentages, "
-        "highlight risks clearly, and give actionable recommendations. "
+        "Analyze the named user's financial behavior and provide structured advice. "
+        "Address the user by their name throughout and never say 'user'. "
+        "Write the response in clean GitHub-flavored markdown with short sections, numbered lists, "
+        "and concise paragraphs. Avoid raw bullet markers and keep the output easy to read. "
         "Output format: 1) Key Insights 2) Risks 3) Recommendations 4) Financial Score (0-100)."
     )
 
 
     user_prompt = (
+        f"User name: {user_name}\n"
         "Here is the user's Financial Data:\n"
         f"{_serialize_aggregation(aggregated_data)}\n\n"
         f"Focus area: {focus if focus else 'overall spending and savings'}\n\n"
-        "Return a concise spending insight and next best actions based on the data above."
+        "Return a concise markdown insight and next best actions based on the data above. "
+        f"Use {user_name} when referring to the person."
     )
 
     insight = _call_chat_completion(

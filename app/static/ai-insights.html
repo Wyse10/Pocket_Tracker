@@ -150,10 +150,48 @@
       background: #f8fafc;
     }
 
-    #ai-insight {
-      margin: 0;
-      white-space: pre-wrap;
+    .markdown-content {
       line-height: 1.5;
+    }
+
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content p,
+    .markdown-content ol {
+      margin: 0 0 0.75rem 0;
+    }
+
+    .markdown-content h2,
+    .markdown-content h3 {
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .markdown-content h2 {
+      font-size: 1.2rem;
+    }
+
+    .markdown-content h3 {
+      font-size: 1.05rem;
+    }
+
+    .markdown-content ol {
+      padding-left: 1.25rem;
+    }
+
+    .markdown-content li + li {
+      margin-top: 0.35rem;
+    }
+
+    .markdown-content strong {
+      color: var(--text);
+    }
+
+    .markdown-content code {
+      padding: 0.1rem 0.35rem;
+      border-radius: 6px;
+      background: #e2e8f0;
+      font-size: 0.95em;
     }
 
     .quick-back-link,
@@ -203,13 +241,13 @@
 
       <div class="insight-box">
         <p id="ai-meta" class="section-note" style="margin: 0 0 8px 0;"></p>
-        <p id="ai-insight">No insight yet. Click "Generate AI Insight".</p>
+        <div id="ai-insight" class="markdown-content">No insight yet. Click "Generate AI Insight".</div>
       </div>
     </section>
   </main>
 
   <script src="/static/js/shared/api-client.js?v=2"></script>
   <script src="/static/js/shared/auth.js?v=1"></script>
-  <script src="/static/js/ai-insights.js?v=3"></script>
+  <script src="/static/js/ai-insights.js?v=4"></script>
 </body>
 </html>
