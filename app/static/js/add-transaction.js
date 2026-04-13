@@ -167,6 +167,7 @@ function renderTransactions(items) {
     .map((item) => {
       const typeClass = item.type === 'income' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700';
       const amountClass = item.type === 'income' ? 'text-emerald-700' : 'text-rose-700';
+      const rowTypeClass = item.type === 'income' ? 'transaction-row--income' : 'transaction-row--expense';
       const sign = item.type === 'income' ? '+' : '-';
       const safeDate = escapeHtml(formatDate(item.date));
       const safeType = escapeHtml(item.type);
@@ -175,7 +176,7 @@ function renderTransactions(items) {
       const safeId = Number(item.id);
 
       return `
-        <tr class="hover:bg-slate-50/80">
+        <tr class="transaction-row ${rowTypeClass}">
           <td data-label="Date" class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">${safeDate}</td>
           <td data-label="Type" class="px-4 py-3 text-sm">
             <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${typeClass}">${safeType}</span>
