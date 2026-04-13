@@ -46,6 +46,37 @@ def create_transaction(db: Session, payload: schemas.TransactionCreate, user_id:
     return tx
 
 
+def update_transaction(
+    db: Session,
+    transaction_id: int,
+    payload: schemas.TransactionUpdate,
+    user_id: int,
+) -> models.Transaction | None:
+    tx = db.get(models.Transaction, transaction_id)
+    if tx is None or tx.user_id != user_id:
+        return None
+
+    if payload.amount is not None:
+        tx.amount = payload.amount
+
+    if payload.type is not None:
+        tx.type = normalize_transaction_type(payload.type)
+
+    if payload.category is not None:
+        tx.category = normalize_category(payload.category)
+
+    if payload.description is not None:
+        cleaned_description = payload.description.strip()
+        tx.description = cleaned_description if cleaned_description else None
+
+    if payload.date is not None:
+        tx.date = payload.date
+
+    db.commit()
+    db.refresh(tx)
+    return tx
+
+
 def delete_transaction(db: Session, transaction_id: int, user_id: int) -> bool:
     tx = db.get(models.Transaction, transaction_id)
     if tx is None or tx.user_id != user_id:

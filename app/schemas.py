@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date as Date
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -9,7 +9,15 @@ class TransactionCreate(BaseModel):
     type: str = Field(..., min_length=1, max_length=20)
     category: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=500)
-    date: date
+    date: Date
+
+
+class TransactionUpdate(BaseModel):
+    amount: float | None = Field(default=None, gt=0)
+    type: str | None = Field(default=None, min_length=1, max_length=20)
+    category: str | None = Field(default=None, min_length=1, max_length=100)
+    description: str | None = Field(default=None, max_length=500)
+    date: Date | None = None
 
 
 class TransactionRead(BaseModel):
@@ -19,7 +27,7 @@ class TransactionRead(BaseModel):
     type: Literal["income", "expense"]
     category: str
     description: str | None
-    date: date
+    date: Date
 
     class Config:
         from_attributes = True

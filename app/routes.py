@@ -218,6 +218,20 @@ def delete_transaction(
     return {"message": "Transaction deleted.", "deleted_id": transaction_id}
 
 
+@router.put("/transactions/{transaction_id}", response_model=schemas.TransactionRead)
+def update_transaction(
+    transaction_id: int,
+    payload: schemas.TransactionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    updated = crud.update_transaction(db, transaction_id, payload, user_id=current_user.id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    return updated
+
+
 @router.post("/categories", response_model=schemas.CategoryOptionsResponse)
 def get_categories(payload: schemas.CategoryOptionsRequest):
     if payload.transaction_type:

@@ -76,6 +76,9 @@
     postJson(url, body, fallbackMessage = 'Request failed.') {
       return requestJson(url, { method: 'POST', body }, fallbackMessage);
     },
+    putJson(url, body, fallbackMessage = 'Request failed.') {
+      return requestJson(url, { method: 'PUT', body }, fallbackMessage);
+    },
     deleteJson(url, fallbackMessage = 'Request failed.') {
       return requestJson(url, { method: 'DELETE' }, fallbackMessage);
     },

@@ -1,8 +1,10 @@
 const form = document.getElementById('transaction-form');
 const message = document.getElementById('message');
+const amountInput = document.getElementById('amount');
 const dateInput = document.getElementById('date');
 const typeSelect = document.getElementById('type');
 const categorySelect = document.getElementById('category');
+const descriptionInput = document.getElementById('description');
 const filterTypeSelect = document.getElementById('filter-type');
 const filterCategorySelect = document.getElementById('filter-category');
 const tableBody = document.getElementById('transactions-table-body');
@@ -10,6 +12,8 @@ const tableSummary = document.getElementById('table-summary');
 const pageIndicator = document.getElementById('page-indicator');
 const prevPageButton = document.getElementById('prev-page');
 const nextPageButton = document.getElementById('next-page');
+const submitButton = document.getElementById('submit-transaction');
+const cancelEditButton = document.getElementById('cancel-edit');
 const incomeTotalMetric = document.getElementById('metric-income-total');
 const expenseTotalMetric = document.getElementById('metric-expense-total');
 const totalBalanceMetric = document.getElementById('metric-total-balance');
@@ -21,6 +25,7 @@ const state = {
   category: 'all',
   totalPages: 0,
   total: 0,
+  editingTransactionId: null,
 };
 
 if (dateInput) {
@@ -39,6 +44,20 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function ensureSelectOption(selectElement, optionValue) {
+  if (!selectElement || !optionValue) return;
+
+  const normalizedValue = String(optionValue);
+  const hasOption = Array.from(selectElement.options).some((option) => option.value === normalizedValue);
+
+  if (hasOption) return;
+
+  const option = document.createElement('option');
+  option.value = normalizedValue;
+  option.textContent = normalizedValue;
+  selectElement.appendChild(option);
 }
 
 function formatCurrency(amount) {
@@ -122,6 +141,59 @@ async function loadCategories(transactionType) {
   }
 }
 
+function setEditMode(transaction) {
+  state.editingTransactionId = Number(transaction.id);
+
+  if (submitButton) {
+    submitButton.textContent = 'Update Transaction';
+  }
+
+  if (cancelEditButton) {
+    cancelEditButton.style.display = 'inline-flex';
+  }
+
+  showMessage('Editing transaction');
+}
+
+function clearEditMode() {
+  state.editingTransactionId = null;
+
+  if (submitButton) {
+    submitButton.textContent = 'Add Transaction';
+  }
+
+  if (cancelEditButton) {
+    cancelEditButton.style.display = 'none';
+  }
+}
+
+async function beginEditTransaction(transaction) {
+  await loadCategories(transaction.type);
+  ensureSelectOption(categorySelect, transaction.category);
+
+  if (amountInput) {
+    amountInput.value = String(transaction.amount ?? '');
+  }
+
+  if (typeSelect) {
+    typeSelect.value = transaction.type;
+  }
+
+  if (categorySelect) {
+    categorySelect.value = transaction.category;
+  }
+
+  if (descriptionInput) {
+    descriptionInput.value = transaction.description || '';
+  }
+
+  if (dateInput) {
+    dateInput.value = transaction.date || '';
+  }
+
+  setEditMode(transaction);
+}
+
 async function loadFilterCategories(selectedType, selectedCategory = 'all') {
   const transactionType = selectedType === 'all' ? null : selectedType;
 
@@ -173,7 +245,10 @@ function renderTransactions(items) {
       const safeType = escapeHtml(item.type);
       const safeCategory = escapeHtml(item.category);
       const safeDescription = escapeHtml(item.description || '-');
+      const safeDescriptionValue = escapeHtml(item.description || '');
       const safeId = Number(item.id);
+      const safeAmount = escapeHtml(String(item.amount ?? ''));
+      const safeDateValue = escapeHtml(String(item.date || ''));
 
       return `
         <tr class="transaction-row ${rowTypeClass}">
@@ -185,6 +260,20 @@ function renderTransactions(items) {
           <td data-label="Description" class="px-4 py-3 text-sm text-slate-600">${safeDescription}</td>
           <td data-label="Amount" class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold ${amountClass}">${sign}${formatCurrency(item.amount)}</td>
           <td data-label="Actions" class="whitespace-nowrap px-4 py-3 text-right text-sm">
+            <button
+              type="button"
+              class="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+              data-edit-transaction="${safeId}"
+              data-transaction-id="${safeId}"
+              data-transaction-amount="${safeAmount}"
+              data-transaction-type="${safeType}"
+              data-transaction-category="${safeCategory}"
+              data-transaction-description="${safeDescriptionValue}"
+              data-transaction-date="${safeDateValue}"
+              aria-label="Edit transaction ${safeId}"
+            >
+              Edit
+            </button>
             <button
               type="button"
               class="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
@@ -291,20 +380,27 @@ form?.addEventListener('submit', async (event) => {
     amount: Number(formData.get('amount')),
     type: String(formData.get('type')),
     category: String(formData.get('category')),
-    description: String(formData.get('description') || '').trim() || null,
+    description: String(formData.get('description') || '').trim(),
     date: String(formData.get('date')),
   };
 
   try {
-    const saved = await window.apiClient.postJson('/add-transaction', payload, 'Failed to save transaction.');
-    showMessage(`Transaction saved. ID: ${saved.id}`);
+    const isEditing = Boolean(state.editingTransactionId);
+    const requestUrl = isEditing ? `/transactions/${state.editingTransactionId}` : '/add-transaction';
+    const fallbackMessage = isEditing ? 'Failed to update transaction.' : 'Failed to save transaction.';
+    await (isEditing
+      ? window.apiClient.putJson(requestUrl, payload, fallbackMessage)
+      : window.apiClient.postJson(requestUrl, payload, fallbackMessage));
+
+    showMessage(isEditing ? 'Transaction updated' : 'Transaction added');
     form.reset();
     dateInput.value = new Date().toISOString().split('T')[0];
     loadCategories(typeSelect?.value || 'expense');
+    clearEditMode();
     loadDashboardSummary();
     loadTransactions();
   } catch (err) {
-    showMessage('Network error. Please try again.', true);
+    showMessage(err?.message || 'Network error. Please try again.', true);
   }
 });
 
@@ -322,6 +418,16 @@ filterCategorySelect?.addEventListener('change', () => {
   syncFilterState({ category: filterCategorySelect.value });
 });
 
+cancelEditButton?.addEventListener('click', () => {
+  form?.reset();
+  if (dateInput) {
+    dateInput.value = new Date().toISOString().split('T')[0];
+  }
+  loadCategories(typeSelect?.value || 'expense');
+  clearEditMode();
+  showMessage('Edit cancelled.');
+});
+
 prevPageButton?.addEventListener('click', () => {
   if (state.page <= 1) return;
   state.page -= 1;
@@ -335,6 +441,19 @@ nextPageButton?.addEventListener('click', () => {
 });
 
 tableBody?.addEventListener('click', async (event) => {
+  const editButton = event.target.closest('[data-edit-transaction]');
+  if (editButton) {
+    await beginEditTransaction({
+      id: editButton.getAttribute('data-transaction-id'),
+      amount: editButton.getAttribute('data-transaction-amount'),
+      type: editButton.getAttribute('data-transaction-type'),
+      category: editButton.getAttribute('data-transaction-category'),
+      description: editButton.getAttribute('data-transaction-description'),
+      date: editButton.getAttribute('data-transaction-date'),
+    });
+    return;
+  }
+
   const button = event.target.closest('[data-delete-transaction]');
   if (!button) return;
 

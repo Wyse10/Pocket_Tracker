@@ -88,9 +88,12 @@
           <input id="date" name="date" type="date" required>
         </div>
 
-        <div style="grid-column: 1 / -1;">
-          <button type="submit" class="btn btn-block">
+        <div style="grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button id="submit-transaction" type="submit" class="btn btn-block" style="flex: 1 1 220px;">
             Add Transaction
+          </button>
+          <button id="cancel-edit" type="button" class="btn btn-secondary" style="display:none; flex: 0 0 auto;">
+            Cancel Edit
           </button>
         </div>
       </form>
@@ -170,10 +173,10 @@
     <button class="bottom-nav__item" data-bottom-nav-item="profile" data-mobile-profile-trigger type="button">Profile</button>
   </nav>
 
-  <script src="/static/js/shared/api-client.js?v=2"></script>
+  <script src="/static/js/shared/api-client.js?v=3"></script>
   <script src="/static/js/shared/auth.js?v=2"></script>
   <script src="/static/js/shared/profile-avatar.js?v=2"></script>
   <script src="/static/js/shared/app-shell.js?v=1"></script>
-  <script src="/static/js/add-transaction.js?v=16"></script>
+  <script src="/static/js/add-transaction.js?v=18"></script>
 </body>
 </html>
