@@ -5,355 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pocket Tracker - Dashboard</title>
   <link rel="stylesheet" href="/static/css/styles.css">
-  <link rel="stylesheet" href="/static/css/profile-avatar.css?v=1">
+  <link rel="stylesheet" href="/static/css/profile-avatar.css?v=2">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;600;700;800&display=swap');
-
-    :root {
-      color-scheme: light;
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --border: #dbe3ef;
-      --text: #111827;
-      --muted: #4b5563;
-      --primary: #0f4c81;
-      --primary-dark: #0b3c66;
-      --green: #0f766e;
-      --red: #be123c;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background:
-        radial-gradient(circle at top left, rgba(15, 76, 129, 0.09), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.07), transparent 38%),
-        var(--bg);
-      color: var(--text);
-      font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      min-height: 100vh;
-    }
-
-    .page-shell {
-      max-width: 1140px;
-      margin: 0 auto;
-      padding: clamp(18px, 3.5vw, 32px) clamp(12px, 3vw, 16px);
-      animation: rise-in 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    }
-
-    .top-links {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .user-greeting {
-      margin-right: auto;
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 0.92rem;
-    }
-
-    .quick-back-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #155e9a);
-      color: #ffffff;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .quick-back-link:hover {
-      background: linear-gradient(135deg, var(--primary-dark), #134f81);
-      text-decoration: none;
-    }
-
-    .page-title {
-      margin: 0;
-      font-size: clamp(1.9rem, 4vw, 2.35rem);
-      line-height: 1.1;
-      font-weight: 800;
-      font-family: "Fraunces", Georgia, "Times New Roman", serif;
-      letter-spacing: -0.03em;
-      text-wrap: balance;
-      overflow-wrap: anywhere;
-    }
-
-    .page-subtitle {
-      margin: 8px 0 0;
-      color: var(--muted);
-    }
-
-    .session-bar {
-      margin-top: 14px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      border: 1px solid #c8d6e8;
-      background: #eef4fb;
-      color: #173b63;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #0f4c81;
-      animation: pulse 1.4s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.4; transform: scale(0.95); }
-      50% { opacity: 1; transform: scale(1.1); }
-      100% { opacity: 0.4; transform: scale(0.95); }
-    }
-
-    @keyframes rise-in {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .page-shell {
-        animation: none;
-      }
-    }
-
-    .btn {
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #155e9a);
-      color: #ffffff;
-      padding: 10px 14px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn:hover {
-      background: linear-gradient(135deg, var(--primary-dark), #134f81);
-    }
-
-    .metric-grid {
-      margin-top: 20px;
-      display: grid;
-      grid-template-columns: repeat(1, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 14px 34px rgba(17, 24, 39, 0.08);
-      padding: 20px;
-    }
-
-    .metric-label {
-      margin: 0;
-      font-size: 0.76rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #64748b;
-    }
-
-    .metric-value {
-      margin: 10px 0 0;
-      font-size: clamp(1.45rem, 4.8vw, 1.85rem);
-      line-height: 1.1;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .chart-grid {
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: repeat(1, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .chart-box {
-      min-height: 360px;
-    }
-
-    .empty-note {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .chart-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 6px;
-    }
-
-    .trend-controls {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .trend-controls label {
-      color: #334155;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .trend-controls select {
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 6px 8px;
-      font: inherit;
-      color: #0f172a;
-      background: #ffffff;
-    }
-
-    @media (min-width: 680px) {
-      .metric-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 640px) {
-      .page-shell {
-        padding: 16px 12px 24px;
-      }
-
-      .top-links,
-      .session-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .user-greeting {
-        margin-right: 0;
-        width: 100%;
-      }
-
-      .quick-back-link,
-      .btn {
-        width: 100%;
-        min-height: 48px;
-      }
-
-      .status-pill {
-        width: 100%;
-        justify-content: center;
-        text-align: center;
-      }
-
-      .card {
-        padding: 16px;
-        border-radius: 18px;
-      }
-
-      .metric-grid,
-      .chart-grid {
-        gap: 12px;
-      }
-
-      .chart-box {
-        min-height: 280px;
-      }
-
-      .page-title {
-        line-height: 1.05;
-      }
-
-      .trend-controls label,
-      .trend-controls select,
-      .btn,
-      .quick-back-link {
-        font-size: 16px;
-      }
-
-      .trend-controls select {
-        min-height: 48px;
-      }
-
-      .chart-head {
-        align-items: stretch;
-      }
-
-      .trend-controls {
-        width: 100%;
-        flex-direction: column;
-      }
-
-      .trend-controls select {
-        width: 100%;
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .metric-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-
-      .chart-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    .quick-back-link,
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border: 0;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #ffffff;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .quick-back-link:hover,
-    .btn:hover {
-      background: var(--primary-dark);
-      text-decoration: none;
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/app-shell.css?v=1">
 </head>
 <body>
-  <main class="page-shell">
-    <div class="top-links">
-      <span id="user-greeting" class="user-greeting"></span>
-      <a class="quick-back-link" href="/add-transaction">Back to Transactions</a>
-      <button id="logout-button" type="button" class="quick-back-link">Logout</button>
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-brand">
+        <span class="app-brand__eyebrow">Pocket Tracker</span>
+        <p id="user-greeting" class="app-brand__greeting"></p>
+      </div>
+        <div class="app-header__actions">
+          <a class="quick-back-link desktop-only" href="/add-transaction">Transactions</a>
+          <a class="quick-back-link desktop-only" href="/ai-insights">AI Insights</a>
+        </div>
     </div>
+  </header>
 
-    <h1 class="page-title">Real-Time Dashboard Session</h1>
-    <p class="page-subtitle">Live financial summary from your latest transaction data.</p>
+  <main class="page-shell">
+    <div class="page-hero">
+      <h1 class="page-title">Real-Time Dashboard Session</h1>
+      <p class="page-subtitle">Live financial summary from your latest transaction data.</p>
+    </div>
 
     <div class="session-bar">
       <span class="status-pill" id="session-status"><span class="status-dot" aria-hidden="true"></span><span>Live updates every 10s</span></span>
@@ -362,21 +36,29 @@
     </div>
 
     <section class="metric-grid">
-      <article class="card">
+      <article class="card metric-card metric-card--income">
+        <span class="metric-card__icon" aria-hidden="true">↗</span>
         <p class="metric-label">Income (Overall)</p>
-        <p id="metric-income-total" class="metric-value" style="color: var(--green);">GH₵0.00</p>
+        <p id="metric-income-total" class="metric-value" style="color: var(--app-success);">GH₵0.00</p>
+        <p class="metric-note">Money received across all transactions.</p>
       </article>
-      <article class="card">
+      <article class="card metric-card metric-card--expense">
+        <span class="metric-card__icon" aria-hidden="true">↘</span>
         <p class="metric-label">Expenses (Overall)</p>
-        <p id="metric-expense-total" class="metric-value" style="color: var(--red);">GH₵0.00</p>
+        <p id="metric-expense-total" class="metric-value" style="color: var(--app-danger);">GH₵0.00</p>
+        <p class="metric-note">Money spent across all transactions.</p>
       </article>
-      <article class="card">
+      <article class="card metric-card metric-card--balance">
+        <span class="metric-card__icon" aria-hidden="true">◎</span>
         <p class="metric-label">Balance (Overall)</p>
         <p id="metric-total-balance" class="metric-value">GH₵0.00</p>
+        <p class="metric-note">Income minus expenses.</p>
       </article>
-      <article class="card">
+      <article class="card metric-card metric-card--balance">
+        <span class="metric-card__icon" aria-hidden="true">◌</span>
         <p class="metric-label">Spending (This Month)</p>
         <p id="metric-monthly-spending" class="metric-value">GH₵0.00</p>
+        <p class="metric-note">Recent spending over the current month.</p>
       </article>
     </section>
 
@@ -405,9 +87,17 @@
     </section>
   </main>
 
+  <nav class="bottom-nav" aria-label="Primary">
+    <a class="bottom-nav__item" data-bottom-nav-item="home" href="/dashboard">Home</a>
+    <a class="bottom-nav__item" data-bottom-nav-item="add" href="/add-transaction">Add</a>
+    <a class="bottom-nav__item" data-bottom-nav-item="insights" href="/ai-insights">Insights</a>
+    <button class="bottom-nav__item" data-bottom-nav-item="profile" data-mobile-profile-trigger type="button">Profile</button>
+  </nav>
+
   <script src="/static/js/shared/api-client.js?v=2"></script>
-  <script src="/static/js/shared/auth.js?v=1"></script>
-  <script src="/static/js/shared/profile-avatar.js?v=1"></script>
+  <script src="/static/js/shared/auth.js?v=2"></script>
+  <script src="/static/js/shared/profile-avatar.js?v=2"></script>
+  <script src="/static/js/shared/app-shell.js?v=1"></script>
   <script src="/static/js/dashboard.js?v=6"></script>
 </body>
 </html>

@@ -5,301 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pocket Tracker - AI Insights</title>
   <link rel="stylesheet" href="/static/css/styles.css">
-  <link rel="stylesheet" href="/static/css/profile-avatar.css?v=1">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;600;700;800&display=swap');
-
-    :root {
-      color-scheme: light;
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --border: #dbe3ef;
-      --text: #111827;
-      --muted: #4b5563;
-      --primary: #0f4c81;
-      --primary-dark: #0b3c66;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background:
-        radial-gradient(circle at top left, rgba(15, 76, 129, 0.09), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.07), transparent 38%),
-        var(--bg);
-      color: var(--text);
-      font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      min-height: 100vh;
-    }
-
-    .page-shell {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: clamp(18px, 3.5vw, 32px) clamp(12px, 3vw, 16px);
-      animation: rise-in 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    }
-
-    .top-links {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .user-greeting {
-      margin-right: auto;
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 0.92rem;
-    }
-
-    .quick-back-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #155e9a);
-      color: #ffffff;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .quick-back-link:hover {
-      background: linear-gradient(135deg, var(--primary-dark), #134f81);
-      text-decoration: none;
-    }
-
-    .page-title {
-      margin: 0 0 8px;
-      font-size: clamp(1.9rem, 4vw, 2.2rem);
-      line-height: 1.1;
-      font-weight: 800;
-      font-family: "Fraunces", Georgia, "Times New Roman", serif;
-      letter-spacing: -0.03em;
-      text-wrap: balance;
-      overflow-wrap: anywhere;
-    }
-
-    .page-subtitle {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    .layout-card {
-      margin-top: 24px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 14px 34px rgba(17, 24, 39, 0.08);
-      padding: 24px;
-    }
-
-    .layout-card::before {
-      content: '';
-      display: block;
-      width: 72px;
-      height: 4px;
-      margin-bottom: 14px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--primary), #8a5a14);
-    }
-
-    .section-note {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .field {
-      margin-top: 14px;
-      max-width: 560px;
-    }
-
-    .field label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .field input {
-      width: 100%;
-      padding: 11px 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      font: inherit;
-      background: white;
-      color: var(--text);
-    }
-
-    .field input:focus {
-      outline: 2px solid rgba(37, 99, 235, 0.25);
-      border-color: var(--primary);
-    }
-
-    .btn {
-      margin-top: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 18px;
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #155e9a);
-      color: white;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn:hover {
-      background: linear-gradient(135deg, var(--primary-dark), #134f81);
-    }
-
-    .insight-box {
-      margin-top: 14px;
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #f8fafc;
-    }
-
-    .markdown-content {
-      line-height: 1.5;
-    }
-
-    .markdown-content h2,
-    .markdown-content h3,
-    .markdown-content p,
-    .markdown-content ol {
-      margin: 0 0 0.75rem 0;
-    }
-
-    .markdown-content h2,
-    .markdown-content h3 {
-      color: var(--text);
-      line-height: 1.2;
-    }
-
-    .markdown-content h2 {
-      font-size: 1.2rem;
-    }
-
-    .markdown-content h3 {
-      font-size: 1.05rem;
-    }
-
-    .markdown-content ol {
-      padding-left: 1.25rem;
-    }
-
-    .markdown-content li + li {
-      margin-top: 0.35rem;
-    }
-
-    .markdown-content strong {
-      color: var(--text);
-    }
-
-    .markdown-content code {
-      padding: 0.1rem 0.35rem;
-      border-radius: 6px;
-      background: #e2e8f0;
-      font-size: 0.95em;
-    }
-
-    .quick-back-link,
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #155e9a);
-      color: #ffffff;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .quick-back-link:hover,
-    .btn:hover {
-      background: linear-gradient(135deg, var(--primary-dark), #134f81);
-      text-decoration: none;
-    }
-
-    @keyframes rise-in {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .page-shell {
-        animation: none;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .page-shell {
-        padding: 16px 12px 24px;
-      }
-
-      .top-links {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .user-greeting {
-        margin-right: 0;
-        width: 100%;
-      }
-
-      .quick-back-link,
-      .btn {
-        width: 100%;
-        min-height: 48px;
-      }
-
-      .layout-card {
-        padding: 16px;
-        border-radius: 18px;
-      }
-
-      .field {
-        max-width: none;
-      }
-
-      .field input,
-      .quick-back-link,
-      .btn {
-        font-size: 16px;
-      }
-
-      .field input {
-        min-height: 48px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/profile-avatar.css?v=2">
+  <link rel="stylesheet" href="/static/css/app-shell.css?v=1">
 </head>
 <body>
-  <main class="page-shell">
-    <div class="top-links">
-      <span id="user-greeting" class="user-greeting"></span>
-      <a class="quick-back-link" href="/add-transaction">Back to Transactions</a>
-      <button id="logout-button" type="button" class="quick-back-link">Logout</button>
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-brand">
+        <span class="app-brand__eyebrow">Pocket Tracker</span>
+        <p id="user-greeting" class="app-brand__greeting"></p>
+      </div>
+      <div class="app-header__actions">
+        <a class="quick-back-link desktop-only" href="/add-transaction">Add Transaction</a>
+        <a class="quick-back-link desktop-only" href="/dashboard">Dashboard</a>
+      </div>
     </div>
+  </header>
 
-    <h1 class="page-title">AI Insights</h1>
-    <p class="page-subtitle">Generate practical advice from your transaction history.</p>
+  <main class="page-shell">
+    <div class="page-hero">
+      <h1 class="page-title">AI Insights</h1>
+      <p class="page-subtitle">Generate practical advice from your transaction history.</p>
+    </div>
 
     <section class="layout-card">
       <p class="section-note">Add an optional focus prompt and generate an insight.</p>
@@ -309,7 +36,7 @@
         <input id="ai-focus" type="text" maxlength="120" placeholder="e.g., food spending, savings, transport">
       </div>
 
-      <button id="generate-ai-insight" type="button" class="btn">Generate AI Insight</button>
+      <button id="generate-ai-insight" type="button" class="btn btn-block">Generate AI Insight</button>
       <p id="ai-status" class="section-note" style="margin-top: 12px;">Ready to generate insight.</p>
 
       <div class="insight-box">
@@ -319,9 +46,17 @@
     </section>
   </main>
 
+  <nav class="bottom-nav" aria-label="Primary">
+    <a class="bottom-nav__item" data-bottom-nav-item="home" href="/dashboard">Home</a>
+    <a class="bottom-nav__item" data-bottom-nav-item="add" href="/add-transaction">Add</a>
+    <a class="bottom-nav__item" data-bottom-nav-item="insights" href="/ai-insights">Insights</a>
+    <button class="bottom-nav__item" data-bottom-nav-item="profile" data-mobile-profile-trigger type="button">Profile</button>
+  </nav>
+
   <script src="/static/js/shared/api-client.js?v=2"></script>
-  <script src="/static/js/shared/auth.js?v=1"></script>
-  <script src="/static/js/shared/profile-avatar.js?v=1"></script>
+  <script src="/static/js/shared/auth.js?v=2"></script>
+  <script src="/static/js/shared/profile-avatar.js?v=2"></script>
+  <script src="/static/js/shared/app-shell.js?v=1"></script>
   <script src="/static/js/ai-insights.js?v=4"></script>
 </body>
 </html>

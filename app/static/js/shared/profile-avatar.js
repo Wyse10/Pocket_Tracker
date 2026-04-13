@@ -3,9 +3,14 @@
   const MAX_FILE_SIZE_BYTES = 1572864;
   const VALID_MIME_TYPES = new Set(['image/png', 'image/jpeg']);
   const VALID_EXTENSIONS = new Set(['png', 'jpg', 'jpeg']);
+  const MENU_ACTION_TIMEOUT_MS = 150;
+
+  let widgetState = null;
 
   function getWidgetHost() {
-    return document.querySelector('.top-links-row') || document.querySelector('.top-links');
+    return document.querySelector('.app-header__actions')
+      || document.querySelector('.top-links-row')
+      || document.querySelector('.top-links');
   }
 
   function getStorage() {
@@ -145,7 +150,6 @@
     if (!text) {
       messageElement.hidden = true;
       messageElement.textContent = '';
-      messageElement.dataset.state = '';
       return;
     }
 
@@ -154,45 +158,82 @@
     messageElement.dataset.state = isError ? 'error' : 'success';
   }
 
-  function hideMenu(menuElement, menuButton) {
+  function updateMenuState(menuElement, triggerButton, isOpen) {
     if (menuElement) {
-      menuElement.hidden = true;
+      menuElement.hidden = !isOpen;
     }
 
-    if (menuButton) {
-      menuButton.setAttribute('aria-expanded', 'false');
+    if (triggerButton) {
+      triggerButton.setAttribute('aria-expanded', String(isOpen));
     }
   }
 
-  function toggleMenu(menuElement, menuButton) {
-    if (!menuElement || !menuButton) {
+  function hideMenu() {
+    if (!widgetState) {
       return;
     }
 
-    const isHidden = menuElement.hidden;
-    menuElement.hidden = !isHidden;
-    menuButton.setAttribute('aria-expanded', String(isHidden));
+    updateMenuState(widgetState.menuElement, widgetState.avatarButton, false);
   }
 
-  function renderAvatar(state, user) {
+  function openMenu() {
+    if (!widgetState) {
+      return;
+    }
+
+    updateMenuState(widgetState.menuElement, widgetState.avatarButton, true);
+  }
+
+  function toggleMenu() {
+    if (!widgetState) {
+      return;
+    }
+
+    const isOpen = !widgetState.menuElement.hidden;
+    updateMenuState(widgetState.menuElement, widgetState.avatarButton, !isOpen);
+  }
+
+  async function performLogout() {
+    if (!widgetState) {
+      return;
+    }
+
+    const { logoutButton } = widgetState;
+    if (logoutButton) {
+      logoutButton.disabled = true;
+      logoutButton.textContent = 'Signing out...';
+    }
+
+    try {
+      if (window.apiClient) {
+        await window.apiClient.postJson('/auth/logout', {}, 'Failed to sign out.');
+      } else {
+        await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      }
+    } catch (error) {
+      // Redirect even if the backend session cleanup fails.
+    }
+
+    window.location.assign('/login');
+  }
+
+  function renderAvatar(user) {
+    if (!widgetState) {
+      return;
+    }
+
     const storedProfilePicture = readStoredProfilePicture();
-    const { avatarButton, avatarContent, removeButton } = state;
+    const nextContent = createAvatarContent(user, storedProfilePicture);
+    widgetState.avatarContent.replaceWith(nextContent);
+    widgetState.avatarContent = nextContent;
+  }
 
-    if (!avatarButton || !avatarContent) {
+  async function handleSelectedFile(file) {
+    if (!widgetState) {
       return;
     }
 
-    const nextContent = createAvatarContent(user, storedProfilePicture);
-    avatarContent.replaceWith(nextContent);
-    state.avatarContent = nextContent;
-
-    if (removeButton) {
-      removeButton.hidden = !storedProfilePicture;
-    }
-  }
-
-  async function handleSelectedFile(file, state) {
-    const { messageElement, menuElement, menuButton, fileInput, user } = state;
+    const { messageElement, fileInput, user } = widgetState;
     const validationError = validateFile(file);
 
     if (validationError) {
@@ -216,9 +257,9 @@
         return;
       }
 
-      renderAvatar(state, user);
+      renderAvatar(user);
       setMessage(messageElement, 'Profile picture updated.');
-      hideMenu(menuElement, menuButton);
+      hideMenu();
     } catch (error) {
       setMessage(messageElement, 'Could not process the selected image.', true);
     } finally {
@@ -226,6 +267,26 @@
         fileInput.value = '';
       }
     }
+  }
+
+  function bindGlobalTriggers() {
+    const profileTriggers = document.querySelectorAll('[data-mobile-profile-trigger]');
+    profileTriggers.forEach((button) => {
+      if (button.dataset.profileAvatarBound === 'true') {
+        return;
+      }
+
+      button.dataset.profileAvatarBound = 'true';
+      button.addEventListener('click', () => {
+        if (widgetState?.menuElement.hidden) {
+          openMenu();
+          widgetState.avatarButton.focus();
+          return;
+        }
+
+        toggleMenu();
+      });
+    });
   }
 
   function buildWidget(user) {
@@ -246,29 +307,23 @@
     const avatarButton = document.createElement('button');
     avatarButton.type = 'button';
     avatarButton.className = 'profile-avatar-trigger';
-    avatarButton.setAttribute('aria-label', 'Change profile picture');
-
-    const menuButton = document.createElement('button');
-    menuButton.type = 'button';
-    menuButton.className = 'profile-avatar-menu-toggle';
-    menuButton.textContent = '...';
-    menuButton.setAttribute('aria-haspopup', 'menu');
-    menuButton.setAttribute('aria-expanded', 'false');
-    menuButton.setAttribute('aria-label', 'Profile picture options');
+    avatarButton.setAttribute('aria-label', 'Open profile menu');
+    avatarButton.setAttribute('aria-haspopup', 'menu');
+    avatarButton.setAttribute('aria-expanded', 'false');
 
     const menu = document.createElement('div');
     menu.className = 'profile-avatar-menu';
     menu.hidden = true;
 
-    const changeButton = document.createElement('button');
-    changeButton.type = 'button';
-    changeButton.dataset.profileAction = 'change';
-    changeButton.textContent = 'Change photo';
+    const uploadButton = document.createElement('button');
+    uploadButton.type = 'button';
+    uploadButton.dataset.profileAction = 'upload';
+    uploadButton.textContent = 'Upload Photo';
 
-    const removeButton = document.createElement('button');
-    removeButton.type = 'button';
-    removeButton.dataset.profileAction = 'remove';
-    removeButton.textContent = 'Remove photo';
+    const logoutButton = document.createElement('button');
+    logoutButton.type = 'button';
+    logoutButton.dataset.profileAction = 'logout';
+    logoutButton.textContent = 'Logout';
 
     const messageElement = document.createElement('p');
     messageElement.className = 'profile-avatar-message';
@@ -282,63 +337,50 @@
 
     const avatarContent = createAvatarContent(user, readStoredProfilePicture());
     avatarButton.appendChild(avatarContent);
-    menu.append(changeButton, removeButton);
-    widget.append(avatarButton, menuButton, menu, messageElement, fileInput);
+    menu.append(uploadButton, logoutButton);
+    widget.append(avatarButton, menu, messageElement, fileInput);
     host.appendChild(widget);
 
-    const state = {
+    widgetState = {
       widget,
       avatarButton,
       avatarContent,
-      menuButton,
       menuElement: menu,
       messageElement,
       fileInput,
-      removeButton,
+      logoutButton,
       user,
     };
 
-    avatarButton.addEventListener('click', () => {
-      hideMenu(menu, menuButton);
-      fileInput.click();
-    });
-
-    menuButton.addEventListener('click', (event) => {
+    avatarButton.addEventListener('click', (event) => {
       event.stopPropagation();
-      toggleMenu(menu, menuButton);
+      toggleMenu();
     });
 
-    changeButton.addEventListener('click', () => {
-      hideMenu(menu, menuButton);
+    uploadButton.addEventListener('click', () => {
+      hideMenu();
       fileInput.click();
     });
 
-    removeButton.addEventListener('click', () => {
-      const removed = clearProfilePicture();
-      if (!removed) {
-        setMessage(messageElement, 'Your browser blocked removing the saved avatar.', true);
-        return;
-      }
-
-      renderAvatar(state, user);
-      setMessage(messageElement, 'Profile picture removed.');
-      hideMenu(menu, menuButton);
+    logoutButton.addEventListener('click', () => {
+      hideMenu();
+      void performLogout();
     });
 
     fileInput.addEventListener('change', async () => {
       const [file] = Array.from(fileInput.files || []);
-      await handleSelectedFile(file, state);
+      await handleSelectedFile(file);
     });
 
     document.addEventListener('click', (event) => {
       if (!widget.contains(event.target)) {
-        hideMenu(menu, menuButton);
+        hideMenu();
       }
     });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
-        hideMenu(menu, menuButton);
+        hideMenu();
       }
     });
 
@@ -347,10 +389,15 @@
         return;
       }
 
-      renderAvatar(state, user);
+      renderAvatar(user);
     });
 
-    renderAvatar(state, user);
+    renderAvatar(user);
+    bindGlobalTriggers();
+    window.profileAvatarOpenMenu = openMenu;
+    window.profileAvatarCloseMenu = hideMenu;
+    window.profileAvatarToggleMenu = toggleMenu;
+    window.profileAvatarWidgetState = widgetState;
     return widget;
   }
 
@@ -367,6 +414,7 @@
 
       window.authCurrentUser = user;
       buildWidget(user);
+      window.setTimeout(bindGlobalTriggers, MENU_ACTION_TIMEOUT_MS);
     });
   }
 
