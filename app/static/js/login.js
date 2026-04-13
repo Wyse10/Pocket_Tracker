@@ -2,12 +2,18 @@ const authForm = document.getElementById('auth-form');
 const tabLogin = document.getElementById('tab-login');
 const tabSignup = document.getElementById('tab-signup');
 const nameField = document.getElementById('name-field');
+const confirmPasswordField = document.getElementById('confirm-password-field');
 const fullNameInput = document.getElementById('full-name');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
+const confirmPasswordInput = document.getElementById('confirm-password');
+const togglePasswordButton = document.getElementById('toggle-password');
+const toggleConfirmPasswordButton = document.getElementById('toggle-confirm-password');
 const fullNameError = document.getElementById('full-name-error');
 const emailError = document.getElementById('email-error');
 const passwordError = document.getElementById('password-error');
+const confirmPasswordHint = document.getElementById('confirm-password-hint');
+const confirmPasswordError = document.getElementById('confirm-password-error');
 const submitButton = document.getElementById('submit-auth');
 const authMessage = document.getElementById('auth-message');
 
@@ -30,10 +36,19 @@ function setMode(newMode) {
   tabSignup.classList.toggle('active', isSignup);
 
   nameField.classList.toggle('hidden', !isSignup);
+  confirmPasswordField.classList.toggle('hidden', !isSignup);
   fullNameInput.required = isSignup;
+  confirmPasswordInput.required = isSignup;
   fullNameInput.autocomplete = isSignup ? 'name' : 'off';
+  confirmPasswordInput.autocomplete = isSignup ? 'new-password' : 'off';
 
   passwordInput.autocomplete = isSignup ? 'new-password' : 'current-password';
+  if (!isSignup) {
+    confirmPasswordInput.value = '';
+  }
+  setPasswordVisibility(passwordInput, togglePasswordButton, false);
+  setPasswordVisibility(confirmPasswordInput, toggleConfirmPasswordButton, false);
+  updateConfirmPasswordHint();
   submitButton.textContent = isSignup ? 'Create Account' : 'Sign In';
   clearAllFieldErrors();
   authMessage.textContent = '';
@@ -67,6 +82,63 @@ function clearAllFieldErrors() {
   clearFieldError(fullNameInput, fullNameError);
   clearFieldError(emailInput, emailError);
   clearFieldError(passwordInput, passwordError);
+  clearFieldError(confirmPasswordInput, confirmPasswordError);
+}
+
+function setConfirmPasswordHint(text, state = '') {
+  if (!confirmPasswordHint) {
+    return;
+  }
+
+  confirmPasswordHint.textContent = text;
+  confirmPasswordHint.classList.remove('match', 'mismatch');
+  if (state) {
+    confirmPasswordHint.classList.add(state);
+  }
+}
+
+function updateConfirmPasswordHint() {
+  if (mode !== 'signup') {
+    setConfirmPasswordHint('');
+    return;
+  }
+
+  const password = String(passwordInput.value || '');
+  const confirmPassword = String(confirmPasswordInput.value || '');
+
+  if (!confirmPassword) {
+    setConfirmPasswordHint('');
+    return;
+  }
+
+  if (!password) {
+    setConfirmPasswordHint('Enter a password first.', 'mismatch');
+    return;
+  }
+
+  if (password === confirmPassword) {
+    setConfirmPasswordHint('Passwords match.', 'match');
+    return;
+  }
+
+  setConfirmPasswordHint('Passwords do not match yet.', 'mismatch');
+}
+
+function setPasswordVisibility(inputElement, toggleButton, shouldShow) {
+  if (!inputElement || !toggleButton) {
+    return;
+  }
+
+  inputElement.type = shouldShow ? 'text' : 'password';
+  toggleButton.textContent = shouldShow ? 'Hide' : 'Show';
+  toggleButton.setAttribute('aria-pressed', shouldShow ? 'true' : 'false');
+}
+
+function attachVisibilityToggle(toggleButton, inputElement) {
+  toggleButton?.addEventListener('click', () => {
+    const shouldShow = inputElement.type === 'password';
+    setPasswordVisibility(inputElement, toggleButton, shouldShow);
+  });
 }
 
 function userFriendlyFieldMessage(field, type, fallbackMessage) {
@@ -139,9 +211,10 @@ async function submitAuth(event) {
 
   const email = String(emailInput.value || '').trim();
   const password = String(passwordInput.value || '');
+  const confirmPassword = String(confirmPasswordInput.value || '');
   const fullName = String(fullNameInput.value || '').trim();
 
-  if (!email || !password || (mode === 'signup' && !fullName)) {
+  if (!email || !password || (mode === 'signup' && (!fullName || !confirmPassword))) {
     if (!email) {
       showFieldError(emailInput, emailError, 'Email is required.');
     }
@@ -151,7 +224,16 @@ async function submitAuth(event) {
     if (mode === 'signup' && !fullName) {
       showFieldError(fullNameInput, fullNameError, 'Full name is required.');
     }
+    if (mode === 'signup' && !confirmPassword) {
+      showFieldError(confirmPasswordInput, confirmPasswordError, 'Please confirm your password.');
+    }
     showMessage('Please complete all required fields.', true);
+    return;
+  }
+
+  if (mode === 'signup' && password !== confirmPassword) {
+    showFieldError(confirmPasswordInput, confirmPasswordError, 'Passwords do not match.');
+    showMessage('Please make sure both passwords match.', true);
     return;
   }
 
@@ -198,7 +280,16 @@ tabSignup?.addEventListener('click', () => setMode('signup'));
 authForm?.addEventListener('submit', submitAuth);
 fullNameInput?.addEventListener('input', () => clearFieldError(fullNameInput, fullNameError));
 emailInput?.addEventListener('input', () => clearFieldError(emailInput, emailError));
-passwordInput?.addEventListener('input', () => clearFieldError(passwordInput, passwordError));
+passwordInput?.addEventListener('input', () => {
+  clearFieldError(passwordInput, passwordError);
+  updateConfirmPasswordHint();
+});
+confirmPasswordInput?.addEventListener('input', () => {
+  clearFieldError(confirmPasswordInput, confirmPasswordError);
+  updateConfirmPasswordHint();
+});
+attachVisibilityToggle(togglePasswordButton, passwordInput);
+attachVisibilityToggle(toggleConfirmPasswordButton, confirmPasswordInput);
 
 setMode('login');
 redirectIfAuthenticated();
