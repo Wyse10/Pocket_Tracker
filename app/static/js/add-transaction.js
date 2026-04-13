@@ -156,7 +156,7 @@ function renderTransactions(items) {
 
   if (!items.length) {
     tableBody.innerHTML = `
-      <tr>
+      <tr class="table-empty-row">
         <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-500">No transactions found for the selected filters.</td>
       </tr>
     `;
@@ -176,14 +176,14 @@ function renderTransactions(items) {
 
       return `
         <tr class="hover:bg-slate-50/80">
-          <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">${safeDate}</td>
-          <td class="px-4 py-3 text-sm">
+          <td data-label="Date" class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">${safeDate}</td>
+          <td data-label="Type" class="px-4 py-3 text-sm">
             <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${typeClass}">${safeType}</span>
           </td>
-          <td class="px-4 py-3 text-sm text-slate-700">${safeCategory}</td>
-          <td class="px-4 py-3 text-sm text-slate-600">${safeDescription}</td>
-          <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold ${amountClass}">${sign}${formatCurrency(item.amount)}</td>
-          <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
+          <td data-label="Category" class="px-4 py-3 text-sm text-slate-700">${safeCategory}</td>
+          <td data-label="Description" class="px-4 py-3 text-sm text-slate-600">${safeDescription}</td>
+          <td data-label="Amount" class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold ${amountClass}">${sign}${formatCurrency(item.amount)}</td>
+          <td data-label="Actions" class="whitespace-nowrap px-4 py-3 text-right text-sm">
             <button
               type="button"
               class="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
@@ -203,7 +203,7 @@ async function loadTransactions() {
   if (!tableBody) return;
 
   tableBody.innerHTML = `
-    <tr>
+    <tr class="table-empty-row">
       <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">Loading transactions...</td>
     </tr>
   `;
@@ -259,7 +259,7 @@ async function loadTransactions() {
 
     if (tableBody) {
       tableBody.innerHTML = `
-        <tr>
+          <tr class="table-empty-row">
           <td colspan="6" class="px-4 py-8 text-center text-sm text-red-600">Failed to load transactions.</td>
         </tr>
       `;

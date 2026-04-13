@@ -6,15 +6,17 @@
   <title>Pocket Tracker - AI Insights</title>
   <link rel="stylesheet" href="/static/css/styles.css">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;600;700;800&display=swap');
+
     :root {
       color-scheme: light;
-      --bg: #f1f5f9;
+      --bg: #f5f7fb;
       --card: #ffffff;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --muted: #475569;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
+      --border: #dbe3ef;
+      --text: #111827;
+      --muted: #4b5563;
+      --primary: #0f4c81;
+      --primary-dark: #0b3c66;
     }
 
     * {
@@ -23,16 +25,20 @@
 
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top left, rgba(15, 76, 129, 0.09), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.07), transparent 38%),
+        var(--bg);
       color: var(--text);
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       min-height: 100vh;
     }
 
     .page-shell {
       max-width: 860px;
       margin: 0 auto;
-      padding: 32px 16px;
+      padding: clamp(18px, 3.5vw, 32px) clamp(12px, 3vw, 16px);
+      animation: rise-in 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
     }
 
     .top-links {
@@ -57,22 +63,26 @@
       justify-content: center;
       padding: 10px 14px;
       border-radius: 10px;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #155e9a);
       color: #ffffff;
       font-weight: 700;
       text-decoration: none;
     }
 
     .quick-back-link:hover {
-      background: var(--primary-dark);
+      background: linear-gradient(135deg, var(--primary-dark), #134f81);
       text-decoration: none;
     }
 
     .page-title {
       margin: 0 0 8px;
-      font-size: 2.2rem;
+      font-size: clamp(1.9rem, 4vw, 2.2rem);
       line-height: 1.1;
       font-weight: 800;
+      font-family: "Fraunces", Georgia, "Times New Roman", serif;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
     }
 
     .page-subtitle {
@@ -85,8 +95,18 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 14px 34px rgba(17, 24, 39, 0.08);
       padding: 24px;
+    }
+
+    .layout-card::before {
+      content: '';
+      display: block;
+      width: 72px;
+      height: 4px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--primary), #8a5a14);
     }
 
     .section-note {
@@ -131,7 +151,7 @@
       padding: 12px 18px;
       border: 0;
       border-radius: 10px;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #155e9a);
       color: white;
       font: inherit;
       font-weight: 700;
@@ -139,7 +159,7 @@
     }
 
     .btn:hover {
-      background: var(--primary-dark);
+      background: linear-gradient(135deg, var(--primary-dark), #134f81);
     }
 
     .insight-box {
@@ -202,7 +222,7 @@
       padding: 10px 14px;
       border: 0;
       border-radius: 10px;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #155e9a);
       color: #ffffff;
       font: inherit;
       font-weight: 700;
@@ -212,8 +232,60 @@
 
     .quick-back-link:hover,
     .btn:hover {
-      background: var(--primary-dark);
+      background: linear-gradient(135deg, var(--primary-dark), #134f81);
       text-decoration: none;
+    }
+
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .page-shell {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-shell {
+        padding: 16px 12px 24px;
+      }
+
+      .top-links {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .user-greeting {
+        margin-right: 0;
+        width: 100%;
+      }
+
+      .quick-back-link,
+      .btn {
+        width: 100%;
+        min-height: 48px;
+      }
+
+      .layout-card {
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      .field {
+        max-width: none;
+      }
+
+      .field input,
+      .quick-back-link,
+      .btn {
+        font-size: 16px;
+      }
+
+      .field input {
+        min-height: 48px;
+      }
     }
   </style>
 </head>

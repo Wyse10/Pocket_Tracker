@@ -6,16 +6,18 @@
   <title>Pocket Tracker - Add Transaction</title>
   <link rel="stylesheet" href="/static/css/styles.css">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;600;700;800&display=swap');
+
     :root {
       color-scheme: light;
-      --bg: #f1f5f9;
+      --bg: #f5f7fb;
       --card: #ffffff;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --muted: #475569;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --green: #047857;
+      --border: #dbe3ef;
+      --text: #111827;
+      --muted: #4b5563;
+      --primary: #0f4c81;
+      --primary-dark: #0b3c66;
+      --green: #0f766e;
       --red: #be123c;
     }
 
@@ -25,9 +27,12 @@
 
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top left, rgba(15, 76, 129, 0.09), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.07), transparent 38%),
+        var(--bg);
       color: var(--text);
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       min-height: 100vh;
     }
 
@@ -43,14 +48,19 @@
     .page-shell {
       max-width: 1120px;
       margin: 0 auto;
-      padding: 32px 16px;
+      padding: clamp(18px, 3.5vw, 32px) clamp(12px, 3vw, 16px);
+      animation: rise-in 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
     }
 
     .page-title {
       margin: 0 0 8px;
-      font-size: 2.4rem;
+      font-size: clamp(1.95rem, 4.2vw, 2.4rem);
       line-height: 1.1;
       font-weight: 800;
+      font-family: "Fraunces", Georgia, "Times New Roman", serif;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
     }
 
     .page-subtitle {
@@ -76,7 +86,7 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 14px 34px rgba(17, 24, 39, 0.08);
       padding: 20px;
     }
 
@@ -91,16 +101,17 @@
 
     .metric-value {
       margin: 10px 0 0;
-      font-size: 1.75rem;
+      font-size: clamp(1.45rem, 4.8vw, 1.75rem);
       line-height: 1.2;
       font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .layout-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 14px 34px rgba(17, 24, 39, 0.08);
       padding: 24px;
       margin-bottom: 24px;
     }
@@ -118,6 +129,9 @@
       margin: 0;
       font-size: 1.35rem;
       line-height: 1.2;
+      font-family: "Fraunces", Georgia, "Times New Roman", serif;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
     }
 
     .section-note {
@@ -126,7 +140,8 @@
       font-size: 0.95rem;
     }
 
-    .form-grid, .filter-grid {
+    .form-grid,
+    .filter-grid {
       display: grid;
       gap: 16px;
     }
@@ -139,6 +154,7 @@
       .form-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
       .filter-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -176,7 +192,7 @@
       padding: 12px 18px;
       border: 0;
       border-radius: 10px;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #155e9a);
       color: white;
       font: inherit;
       font-weight: 700;
@@ -184,11 +200,22 @@
     }
 
     .btn:hover {
-      background: var(--primary-dark);
+      background: linear-gradient(135deg, var(--primary-dark), #134f81);
     }
 
     .btn-secondary {
       background: white;
+
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .page-shell {
+        animation: none;
+      }
+    }
       color: #334155;
       border: 1px solid #cbd5e1;
     }
@@ -227,14 +254,14 @@
       justify-content: center;
       padding: 10px 14px;
       border-radius: 10px;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #155e9a);
       color: #ffffff;
       font-weight: 700;
       text-decoration: none;
     }
 
     .quick-dashboard-link:hover {
-      background: var(--primary-dark);
+      background: linear-gradient(135deg, var(--primary-dark), #134f81);
       text-decoration: none;
     }
 
@@ -243,14 +270,17 @@
       border: 1px solid var(--border);
       border-radius: 16px;
     }
+      letter-spacing: -0.02em;
 
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
+      overflow: hidden;
     }
 
-    th, td {
+    th,
+    td {
       padding: 14px 16px;
       border-bottom: 1px solid #e2e8f0;
       text-align: left;
@@ -283,6 +313,19 @@
       color: #9a3412;
       font-size: 0.95rem;
     }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    td[data-label="Amount"] {
+      font-weight: 700;
+    }
+
+    td[data-label="Actions"] {
+      text-align: right;
+    }
+
     .btn,
     .btn-secondary,
     .quick-dashboard-link {
@@ -305,6 +348,158 @@
     .quick-dashboard-link:hover {
       background: var(--primary-dark);
       text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+      .page-shell {
+        padding: 16px 12px 24px;
+      }
+
+      .page-title {
+        font-size: clamp(1.8rem, 8vw, 2.15rem);
+      }
+
+      .metric-grid,
+      .form-grid,
+      .filter-grid {
+        gap: 12px;
+      }
+
+      .card,
+      .layout-card {
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      .top-links,
+      .top-links-row,
+      .section-head,
+      .pagination {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .user-greeting {
+        margin-right: 0;
+        width: 100%;
+      }
+
+      .quick-dashboard-link,
+      .btn,
+      .btn-secondary {
+        width: 100%;
+        min-height: 48px;
+      }
+
+      .section-head > div,
+      .filter-grid {
+        width: 100% !important;
+      }
+
+      .table-wrap {
+        overflow: visible;
+        border: 0;
+      }
+
+      table,
+      thead,
+      tbody,
+      tr,
+      th,
+      td {
+        display: block;
+        width: 100%;
+      }
+
+      thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+      }
+
+      tbody tr {
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      tbody tr.table-empty-row {
+        margin-bottom: 0;
+      }
+
+      tbody tr.table-empty-row td {
+        display: block;
+        padding: 16px;
+        text-align: center;
+      }
+
+      tbody tr.table-empty-row td::before {
+        content: '';
+      }
+
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        text-align: right;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      td:last-child {
+        border-bottom: 0;
+      }
+
+      td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+        text-align: left;
+      }
+
+      td[data-label="Actions"] {
+        text-align: left;
+      }
+
+      td[data-label="Actions"] button {
+        width: 100%;
+      }
+
+      td[data-label="Type"] span {
+        margin-left: auto;
+      }
+
+      .field input,
+      .field select,
+      .btn,
+      .btn-secondary,
+      .quick-dashboard-link {
+        font-size: 16px;
+      }
+
+      .field input,
+      .field select {
+        min-height: 48px;
+      }
+
+      .pagination > div {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -428,7 +623,7 @@
             </tr>
           </thead>
           <tbody id="transactions-table-body">
-            <tr>
+            <tr class="table-empty-row">
               <td colspan="6" style="padding: 16px; text-align: center; color: #64748b;">Loading transactions...</td>
             </tr>
           </tbody>
@@ -437,7 +632,7 @@
 
       <div class="pagination">
         <p id="page-indicator" class="section-note"></p>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; width:100%; justify-content:flex-end;">
           <button id="prev-page" type="button" class="btn btn-secondary">
             Previous
           </button>
