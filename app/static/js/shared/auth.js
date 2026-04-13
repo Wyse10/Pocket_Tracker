@@ -60,6 +60,7 @@
       return null;
     }
 
+    window.authCurrentUser = user;
     renderUserGreeting(user);
     attachLogoutHandler();
     return user;
