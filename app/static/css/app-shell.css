@@ -623,7 +623,18 @@ a:hover {
   .quick-back-link,
   .quick-dashboard-link,
   .bottom-nav__item {
-    min-height: 48px;
+    min-height: 42px;
+  }
+
+  .bottom-nav {
+    padding: 6px;
+    gap: 4px;
+  }
+
+  .bottom-nav__item {
+    padding: 6px 4px;
+    font-size: 0.82rem;
+    border-radius: 10px;
   }
 
   .btn-block,
@@ -678,6 +689,7 @@ a:hover {
     border-radius: 16px;
     background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
     box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
   }
 
   .table-wrap tbody tr.transaction-row--income {
@@ -693,13 +705,13 @@ a:hover {
   }
 
   .table-wrap td {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: minmax(92px, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 12px 14px;
     border-bottom: 1px solid #e2e8f0;
-    text-align: right;
+    text-align: left;
     white-space: normal;
     word-break: break-word;
   }
@@ -710,7 +722,6 @@ a:hover {
 
   .table-wrap td::before {
     content: attr(data-label);
-    flex: 0 0 auto;
     color: #64748b;
     font-size: 0.72rem;
     font-weight: 800;
@@ -724,8 +735,24 @@ a:hover {
     font-weight: 700;
   }
 
+  .table-wrap td[data-label="Amount"] {
+    text-align: left;
+  }
+
+  .table-wrap td[data-label="Actions"] {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
   .table-wrap td[data-label="Actions"] button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+  }
+
+  .table-wrap td[data-label="Actions"]::before {
+    margin-bottom: 2px;
   }
 
   .bottom-nav {
