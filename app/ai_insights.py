@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 import httpx
@@ -106,6 +107,38 @@ def _call_chat_completion(
     )
 
 
+def _normalize_insight_text(insight: str, user_name: str) -> str:
+    title = f"Financial Analysis for {user_name}"
+    body = str(insight or '').strip()
+
+    if body.startswith(title):
+        body = body[len(title):].lstrip("\r\n :\t-")
+    else:
+        # Remove any model-generated title line so the app controls the displayed title.
+        first_line, _, remainder = body.partition("\n")
+        if "financial analysis" in first_line.lower() or user_name.lower() in first_line.lower():
+            body = remainder.lstrip()
+
+    name_parts = [part for part in re.split(r"\s+", user_name.strip()) if part]
+    if user_name.strip():
+        body = re.sub(rf"\b{re.escape(user_name.strip())}\b", "you", body, flags=re.IGNORECASE)
+    for part in name_parts:
+        body = re.sub(rf"\b{re.escape(part)}\b", "you", body, flags=re.IGNORECASE)
+
+    pronoun_map = {
+        r"\bhis\b": "your",
+        r"\bhim\b": "you",
+        r"\bhe\b": "you",
+        r"\bhis\b": "your",
+        r"\bhers\b": "your",
+        r"\bhimself\b": "yourself",
+    }
+    for pattern, replacement in pronoun_map.items():
+        body = re.sub(pattern, replacement, body, flags=re.IGNORECASE)
+
+    return f"{title}\n\n{body}".strip()
+
+
 def generate_ai_insight(aggregated_data: dict, user_name: str, focus: str | None = None) -> dict:
     api_key, base_url, model, provider = _llm_settings()
 
@@ -117,11 +150,14 @@ def generate_ai_insight(aggregated_data: dict, user_name: str, focus: str | None
 
     system_prompt = (
         "You are a strict and intelligent financial advisor. "
-        "Analyze the named user's financial behavior and provide structured advice. "
-        "Address the user by their name throughout and never say 'user'. "
-        "Write the response in clean GitHub-flavored markdown with short sections, numbered lists, "
-        "and concise paragraphs. Avoid raw bullet markers and keep the output easy to read. "
-        "Output format: 1) Key Insights 2) Risks 3) Recommendations 4) Financial Score (0-100)."
+        "Analyze the provided financial behavior and provide structured advice. "
+        f"The first line must be exactly: 'Financial Analysis for {user_name}'. "
+        "After the title line, address the person only as 'you' and 'your'. "
+        "Do not use the person's name anywhere in the body. "
+        "Keep markdown simple and readable. "
+        "Use short bullet points under Key Insights and Risks, and short numbered points under Recommendations. "
+        "Make the body easy to scan and explain ideas in simple, direct language. "
+        "Output sections in this order: 1) Key Insights 2) Risks 3) Recommendations 4) Financial Score (0-100)."
     )
 
 
@@ -131,7 +167,7 @@ def generate_ai_insight(aggregated_data: dict, user_name: str, focus: str | None
         f"{_serialize_aggregation(aggregated_data)}\n\n"
         f"Focus area: {focus if focus else 'overall spending and savings'}\n\n"
         "Return a concise markdown insight and next best actions based on the data above. "
-        f"Use {user_name} when referring to the person."
+        "Use the title line and then refer to the person as you."
     )
 
     insight = _call_chat_completion(
@@ -144,6 +180,8 @@ def generate_ai_insight(aggregated_data: dict, user_name: str, focus: str | None
         ],
         temperature=0.4,
     )
+
+    insight = _normalize_insight_text(insight, user_name)
 
     return {
         "provider": provider,

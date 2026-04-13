@@ -24,6 +24,8 @@ function renderMarkdown(markdown) {
   const blocks = [];
   let paragraphLines = [];
   let orderedListItems = [];
+  let unorderedListItems = [];
+  let titleRendered = false;
 
   const flushParagraph = () => {
     if (!paragraphLines.length) {
@@ -41,12 +43,37 @@ function renderMarkdown(markdown) {
     orderedListItems = [];
   };
 
+  const flushUnorderedList = () => {
+    if (!unorderedListItems.length) {
+      return;
+    }
+    blocks.push(`<ul>${unorderedListItems.map((item) => `<li>${formatInlineMarkdown(item)}</li>`).join('')}</ul>`);
+    unorderedListItems = [];
+  };
+
   for (const rawLine of lines) {
     const line = rawLine.trim();
 
     if (!line) {
       flushParagraph();
       flushOrderedList();
+      flushUnorderedList();
+      continue;
+    }
+
+    if (/^[-=]{3,}$/.test(line)) {
+      flushParagraph();
+      flushOrderedList();
+      flushUnorderedList();
+      continue;
+    }
+
+    if (!titleRendered && /^Financial Analysis for\s+.+$/i.test(line)) {
+      flushParagraph();
+      flushOrderedList();
+      flushUnorderedList();
+      blocks.push(`<h2><strong>${formatInlineMarkdown(line)}</strong></h2>`);
+      titleRendered = true;
       continue;
     }
 
@@ -54,6 +81,7 @@ function renderMarkdown(markdown) {
     if (headingMatch) {
       flushParagraph();
       flushOrderedList();
+      flushUnorderedList();
       const headingLevel = headingMatch[1].length;
       blocks.push(`<h${headingLevel}>${formatInlineMarkdown(headingMatch[2])}</h${headingLevel}>`);
       continue;
@@ -62,16 +90,27 @@ function renderMarkdown(markdown) {
     const orderedItemMatch = line.match(/^\d+\.\s+(.+)$/);
     if (orderedItemMatch) {
       flushParagraph();
+      flushUnorderedList();
       orderedListItems.push(orderedItemMatch[1]);
       continue;
     }
 
+    const unorderedItemMatch = line.match(/^[*\-]\s+(.+)$/);
+    if (unorderedItemMatch) {
+      flushParagraph();
+      flushOrderedList();
+      unorderedListItems.push(unorderedItemMatch[1]);
+      continue;
+    }
+
     flushOrderedList();
+    flushUnorderedList();
     paragraphLines.push(line);
   }
 
   flushParagraph();
   flushOrderedList();
+  flushUnorderedList();
 
   return blocks.join('');
 }
