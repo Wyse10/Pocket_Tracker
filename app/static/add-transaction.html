@@ -6,9 +6,9 @@
   <title>Pocket Tracker - Add Transaction</title>
   <link rel="stylesheet" href="/static/css/styles.css">
   <link rel="stylesheet" href="/static/css/profile-avatar.css?v=2">
-  <link rel="stylesheet" href="/static/css/app-shell.css?v=1">
+  <link rel="stylesheet" href="/static/css/app-shell.css?v=3">
 </head>
-<body>
+<body class="page-add-transaction">
   <header class="app-header">
     <div class="app-header__inner">
       <div class="app-brand">
@@ -55,7 +55,7 @@
       <form id="transaction-form" class="form-grid">
         <div class="field">
           <label for="amount">Amount</label>
-          <input id="amount" name="amount" type="number" step="1" min="10" required>
+          <input id="amount" name="amount" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" minlength="1" required>
         </div>
 
         <div class="field">
@@ -176,6 +176,6 @@
   <script src="/static/js/shared/auth.js?v=2"></script>
   <script src="/static/js/shared/profile-avatar.js?v=2"></script>
   <script src="/static/js/shared/app-shell.js?v=1"></script>
-  <script src="/static/js/add-transaction.js?v=18"></script>
+  <script src="/static/js/add-transaction.js?v=20"></script>
 </body>
 </html>

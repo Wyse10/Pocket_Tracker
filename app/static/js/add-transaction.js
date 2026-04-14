@@ -376,8 +376,17 @@ form?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const formData = new FormData(form);
+  const amountValue = String(formData.get('amount') || '').trim();
+  const amount = Number(amountValue);
+
+  if (!Number.isFinite(amount) || amount < 10) {
+    showMessage('Enter a valid amount of at least 10.', true);
+    amountInput?.focus();
+    return;
+  }
+
   const payload = {
-    amount: Number(formData.get('amount')),
+    amount,
     type: String(formData.get('type')),
     category: String(formData.get('category')),
     description: String(formData.get('description') || '').trim(),
